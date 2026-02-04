@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Déposer une annonce — ContainerConnect</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b33;
+      --text:#e8eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.08);
+      --accent:#4ea1ff;
+      --ok:#38d6a6;
+      --warn:#ffcc66;
+      --danger:#ff6b6b;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .topbar{
+      grid-column:1 / -1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:14px;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width:0;
+    }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(135deg, var(--accent), #8a7dff);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;
+      flex:0 0 auto;
+    }
+    .title{ font-weight:800; letter-spacing:.2px; }
+    .subtitle{ color:var(--muted); font-size:12px; margin-top:2px; }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+    }
+    label{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{ min-height:110px; resize:vertical; }
+
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(78,161,255,.18);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ background:rgba(78,161,255,.25); }
+
+    .btn-ghost{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn-ghost:hover{ background:rgba(255,255,255,.07); }
+
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+    }
+    .pill.active-buy{ border-color:rgba(56,214,166,.55); background:rgba(56,214,166,.14); }
+    .pill.active-rent{ border-color:rgba(255,204,102,.55); background:rgba(255,204,102,.14); }
+
+    #map{ height:360px; border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+
+    .thumbs{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .thumb{
+      width:86px; height:66px; border-radius:12px;
+      object-fit:cover;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+    }
+    .hint{ color:var(--muted); font-size:12px; margin-top:8px; }
+    .error{ color:var(--danger); font-size:12px; margin-top:8px; }
+
+    @media (max-width: 920px){
+      .wrap{ grid-template-columns: 1fr; }
+      #map{ height:320px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">CC</div>
+        <div style="min-width:0;">
+          <div class="title">Déposer une annonce</div>
+          <div class="subtitle">Type, classe, prix, description, 5 photos max, position sur carte</div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn-ghost" id="btnBack">Retour</button>
+        <button class="btn" id="btnPublish">Publier</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:10px;">
+        <div class="pill active-buy" id="pillBuy">Acheter</div>
+        <div class="pill" id="pillRent">Louer</div>
+        <div style="flex:1"></div>
+        <div class="hint" id="kindHint">Mode : Achat</div>
+      </div>
+
+      <div id="rentOptions" style="display:none; margin-bottom:10px;">
+        <label for="period">Durée de location</label>
+        <select id="period">
+          <option value="day">Jour</option>
+          <option value="week">Semaine</option>
+          <option value="month" selected>Mois</option>
+          <option value="year">Année</option>
+        </select>
+      </div>
+
+      <label for="title">Titre de l’annonce</label>
+      <input id="title" type="text" placeholder="ex: Conteneur 20ft étanche, très bon état" />
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="ctype">Type de conteneur</label>
+          <select id="ctype">
+            <option value="20ft">20ft</option>
+            <option value="40ft">40ft</option>
+            <option value="reefer">Reefer (frigo)</option>
+            <option value="open-top">Open-top</option>
+          </select>
+        </div>
+        <div>
+          <label for="cls">Classe (A → C)</label>
+          <select id="cls">
+            <option value="A">A (excellent)</option>
+            <option value="B" selected>B (bon)</option>
+            <option value="C">C (à rénover)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="price" id="priceLabel">Prix (€)</label>
+          <input id="price" type="number" min="0" step="1" placeholder="ex: 3500" />
+        </div>
+        <div>
+          <label for="city">Ville</label>
+          <input id="city" type="text" placeholder="ex: Bordeaux" />
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="desc">Description</label>
+        <textarea id="desc" placeholder="Décris l’état du conteneur, l’accès, le transport, les conditions, etc."></textarea>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="tags">Mots-clés (séparés par des virgules)</label>
+        <input id="tags" type="text" placeholder="ex: étanche, stockage, accès camion" />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="contact">Contact (email/téléphone)</label>
+        <input id="contact" type="text" placeholder="ex: contact@exemple.com" />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="photos">Photos (max 5)</label>
+        <input id="photos" type="file" accept="image/*" multiple />
+        <div class="hint">Les images sont compressées pour éviter de saturer le navigateur.</div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <div class="error" id="err"></div>
+    </div>
+
+    <div class="card">
+      <label>Position sur la carte (clique pour placer le conteneur)</label>
+      <div id="map"></div>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="lat">Latitude</label>
+          <input id="lat" type="number" step="0.000001" placeholder="Clique sur la carte" />
+        </div>
+        <div>
+          <label for="lng">Longitude</label>
+          <input id="lng" type="number" step="0.000001" placeholder="Clique sur la carte" />
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:10px;">
+        Conseil : clique sur la carte pour définir la position précise.
+      </div>
+    </div>
+  </div>
+
+<script>
+function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+
+function loadListings(){
+  const raw = localStorage.getItem("cc_listings");
+  const arr = safeJsonParse(raw);
+  return Array.isArray(arr) ? arr : [];
+}
+function saveListings(arr){
+  localStorage.setItem("cc_listings", JSON.stringify(arr));
+}
+function periodLabel(p){
+  if (p === "day") return "jour";
+  if (p === "week") return "semaine";
+  if (p === "month") return "mois";
+  if (p === "year") return "année";
+  return p;
+}
+
+let kind = "buy";
+let photosData = [];
+let marker = null;
+
+const btnBack = document.getElementById("btnBack");
+const btnPublish = document.getElementById("btnPublish");
+
+const pillBuy = document.getElementById("pillBuy");
+const pillRent = document.getElementById("pillRent");
+const kindHint = document.getElementById("kindHint");
+
+const rentOptions = document.getElementById("rentOptions");
+const periodEl = document.getElementById("period");
+
+const titleEl = document.getElementById("title");
+const ctypeEl = document.getElementById("ctype");
+const clsEl = document.getElementById("cls");
+const priceEl = document.getElementById("price");
+const priceLabelEl = document.getElementById("priceLabel");
+const cityEl = document.getElementById("city");
+const descEl = document.getElementById("desc");
+const tagsEl = document.getElementById("tags");
+const contactEl = document.getElementById("contact");
+
+const photosEl = document.getElementById("photos");
+const thumbsEl = document.getElementById("thumbs");
+const errEl = document.getElementById("err");
+
+const latEl = document.getElementById("lat");
+const lngEl = document.getElementById("lng");
+
+function setKind(newKind){
+  kind = newKind;
+
+  pillBuy.className = "pill" + (kind === "buy" ? " active-buy" : "");
+  pillRent.className = "pill" + (kind === "rent" ? " active-rent" : "");
+
+  if (kind === "rent"){
+    rentOptions.style.display = "block";
+    kindHint.textContent = "Mode : Location";
+    priceLabelEl.textContent = "Prix (€/ " + periodLabel(periodEl.value) + ")";
+    priceEl.placeholder = "ex: 25";
+  } else {
+    rentOptions.style.display = "none";
+    kindHint.textContent = "Mode : Achat";
+    priceLabelEl.textContent = "Prix (€)";
+    priceEl.placeholder = "ex: 3500";
+  }
+}
+pillBuy.addEventListener("click", () => setKind("buy"));
+pillRent.addEventListener("click", () => setKind("rent"));
+periodEl.addEventListener("change", () => {
+  if (kind === "rent"){
+    priceLabelEl.textContent = "Prix (€/ " + periodLabel(periodEl.value) + ")";
+  }
+});
+
+/* Map */
+const map = L.map("map", { zoomControl:true });
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+const FR_BOUNDS = L.latLngBounds(
+  L.latLng(41.0, -5.6),
+  L.latLng(51.6,  9.9)
+);
+
+(function initCenter(){
+  const last = safeJsonParse(localStorage.getItem("cc_last_center"));
+  if (last && typeof last.lat === "number" && typeof last.lng === "number"){
+    map.setView([last.lat, last.lng], 10);
+  } else {
+    map.fitBounds(FR_BOUNDS, { padding:[20,20] });
+  }
+})();
+
+function setMarker(lat, lng){
+  const pos = [lat, lng];
+  if (!marker) marker = L.marker(pos).addTo(map);
+  else marker.setLatLng(pos);
+
+  latEl.value = lat.toFixed(6);
+  lngEl.value = lng.toFixed(6);
+}
+
+map.on("click", (e) => setMarker(e.latlng.lat, e.latlng.lng));
+
+function tryUpdateFromInputs(){
+  const lat = parseFloat(latEl.value);
+  const lng = parseFloat(lngEl.value);
+  if (isNaN(lat) || isNaN(lng)) return;
+  setMarker(lat, lng);
+  map.setView([lat, lng], Math.max(map.getZoom(), 10), { animate:true });
+}
+latEl.addEventListener("change", tryUpdateFromInputs);
+lngEl.addEventListener("change", tryUpdateFromInputs);
+
+/* Photos compression */
+function clearThumbs(){ thumbsEl.innerHTML = ""; }
+function addThumb(dataUrl){
+  const img = document.createElement("img");
+  img.className = "thumb";
+  img.src = dataUrl;
+  thumbsEl.appendChild(img);
+}
+
+function fileToCompressedDataURL(file, maxW, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Lecture fichier impossible"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Image invalide"));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxW){
+          const ratio = maxW / w;
+          w = Math.floor(w * ratio);
+          h = Math.floor(h * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const out = canvas.toDataURL("image/jpeg", quality);
+        resolve(out);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+photosEl.addEventListener("change", async () => {
+  errEl.textContent = "";
+  clearThumbs();
+  photosData = [];
+
+  const files = photosEl.files ? Array.prototype.slice.call(photosEl.files, 0) : [];
+  if (files.length > 5){
+    errEl.textContent = "Max 5 photos. Tu en as sélectionné " + files.length + ".";
+    return;
+  }
+
+  for (let i=0; i<files.length; i++){
+    try{
+      const data = await fileToCompressedDataURL(files[i], 900, 0.78);
+      photosData.push(data);
+      addThumb(data);
+    }catch(e){
+      errEl.textContent = "Erreur sur une photo: " + e.message;
+      return;
+    }
+  }
+});
+
+function splitTags(s){
+  const t = (s || "").split(",");
+  const out = [];
+  for (let i=0;i<t.length;i++){
+    const v = t[i].trim();
+    if (v) out.push(v);
+  }
+  return out;
+}
+
+function validate(){
+  errEl.textContent = "";
+
+  const title = titleEl.value.trim();
+  if (!title) return "Titre obligatoire.";
+
+  const city = cityEl.value.trim();
+  if (!city) return "Ville obligatoire.";
+
+  const price = parseInt(priceEl.value, 10);
+  if (isNaN(price) || price < 0) return "Prix invalide.";
+
+  const lat = parseFloat(latEl.value);
+  const lng = parseFloat(lngEl.value);
+  if (isNaN(lat) || isNaN(lng)) return "Choisis une position sur la carte (latitude/longitude).";
+
+  if (photosData.length > 5) return "Max 5 photos.";
+
+  const desc = descEl.value.trim();
+  if (desc.length > 1200) return "Description trop longue (max 1200 caractères).";
+
+  return "";
+}
+
+btnPublish.addEventListener("click", () => {
+  const v = validate();
+  if (v){
+    errEl.textContent = v;
+    return;
+  }
+
+  const nowId = Date.now();
+
+  const listing = {
+    id: nowId,
+    kind: kind,
+    period: (kind === "rent") ? periodEl.value : undefined,
+    class: clsEl.value,
+    title: titleEl.value.trim(),
+    ctype: ctypeEl.value,
+    city: cityEl.value.trim(),
+    price: parseInt(priceEl.value, 10),
+    lat: parseFloat(latEl.value),
+    lng: parseFloat(lngEl.value),
+    description: descEl.value.trim(),
+    tags: splitTags(tagsEl.value),
+    contact: contactEl.value.trim() || "contact@exemple.com",
+    photos: photosData.slice(0,5),
+    created_at: new Date().toISOString()
+  };
+
+  const arr = loadListings();
+  arr.push(listing);
+
+  try{
+    saveListings(arr);
+  }catch(e){
+    errEl.textContent = "Stockage plein (localStorage). Réduis la taille des photos ou mets moins de photos.";
+    return;
+  }
+
+  alert("Annonce publiée !");
+  window.location.href = "index.html";
+});
+
+btnBack.addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+setKind("buy");
+</script>
+</body>
+</html>
