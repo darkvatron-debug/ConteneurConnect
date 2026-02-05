@@ -247,16 +247,17 @@
       width:100%;
     }
 
-    /* ✅ Connexion sur la carte */
+    /* ✅ Connexion sur la carte (avec shadow) */
     .map-authbar{
       position:absolute;
       top:12px;
       right:12px;
-      z-index:1000; /* au-dessus de la carte */
+      z-index:1000;
       display:flex;
       gap:8px;
       align-items:center;
       pointer-events:auto;
+      filter: drop-shadow(0 10px 22px rgba(0,0,0,.35));
     }
     .userpill{
       display:none;
@@ -271,6 +272,7 @@
       backdrop-filter: blur(6px);
       padding:8px 10px;
       border-radius:999px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
     }
     .iconbtn{
       width:44px;
@@ -284,9 +286,17 @@
       backdrop-filter: blur(6px);
       cursor:pointer;
       user-select:none;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
     }
     .iconbtn:hover{ background:rgba(15,27,51,.88); }
     .iconbtn svg{ width:24px; height:24px; display:block; opacity:.95; }
+
+    /* bouton logout en rouge léger */
+    .iconbtn.logout svg{ opacity: .92; }
+    .iconbtn.logout:hover{
+      background:rgba(255,107,107,.14);
+      border-color:rgba(255,107,107,.30);
+    }
 
     .modal{
       position:fixed; inset:0;
@@ -419,6 +429,7 @@
       <div class="map-authbar">
         <div class="userpill" id="userPill">—</div>
 
+        <!-- ✅ Bouton profil -->
         <button class="iconbtn" id="btnAuth" title="Se connecter" aria-label="Se connecter">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="8" r="4" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
@@ -426,7 +437,15 @@
           </svg>
         </button>
 
-        <button class="btn-ghost" id="btnLogout" style="display:none;">Déconnexion</button>
+        <!-- ✅ Bouton déconnexion (porte) -->
+        <button class="iconbtn logout" id="btnLogout" title="Déconnexion" aria-label="Déconnexion" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 7V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1"
+                  stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13 12H3" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 9l-3 3 3 3" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -496,7 +515,6 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // ✅ Firebase config (CDN)
     const firebaseConfig = {
       apiKey: "AIzaSyBcEfQ7YMg0BxDv5NJmedI0Zc0AfEs3EEI",
       authDomain: "conteneurconnect.firebaseapp.com",
@@ -513,7 +531,6 @@
 
     function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
 
-    // Favoris (prototype local)
     function loadFavs(){
       const o = safeJsonParse(localStorage.getItem("cc_favs"));
       return (o && typeof o === "object") ? o : {};
@@ -550,7 +567,6 @@
       saveFavCounts(FAV_COUNTS);
     }
 
-    // Données (8 annonces)
     const BASE_LISTINGS = [
       { id:1, kind:"buy", class:"A", title:"Conteneur 20ft — stockage sécurisé", ctype:"20ft", city:"Paris", price:2200, lat:48.8566, lng:2.3522,
         tags:["stockage","accès 24/7"], contact:"contact@exemple.com",
@@ -600,12 +616,10 @@
     }
     let LISTINGS = BASE_LISTINGS.concat(loadUserListings());
 
-    // Etat filtres
     let filterKind = "all";
     let filterPeriod = "day";
     let ignoreNextMoveEnd = false;
 
-    // UI refs
     const btnCreate = document.getElementById("btnCreate");
     const btnAll = document.getElementById("btnAll");
     const btnBuy = document.getElementById("btnBuy");
@@ -621,7 +635,6 @@
     const elCount = document.getElementById("count");
     const elReset = document.getElementById("resetView");
 
-    // Auth UI (sur la carte)
     const userPill = document.getElementById("userPill");
     const btnAuth = document.getElementById("btnAuth");
     const btnLogout = document.getElementById("btnLogout");
@@ -635,7 +648,6 @@
     const authPass = document.getElementById("authPass");
     const authErr = document.getElementById("authErr");
 
-    // Map
     const map = L.map("map", { zoomControl:true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -649,7 +661,6 @@
     function fitFrance(){ map.fitBounds(FR_BOUNDS, { padding:[20,20] }); }
     fitFrance();
 
-    // Markers
     const markersById = Object.create(null);
 
     function markerColor(kind){ return (kind === "buy") ? "#38d6a6" : "#ffcc66"; }
@@ -668,7 +679,7 @@
       let m = markersById[item.id];
       if (m) return m;
       m = L.marker([item.lat, item.lng], { icon: makeDivIcon(item.kind) });
-      m.on("click", () => focusListing(item.id, true, false));
+      m.on("click", () => focusListing(item.id, true));
       m.addTo(map);
       markersById[item.id] = m;
       return m;
@@ -686,7 +697,6 @@
       }
     }
 
-    // Helpers
     function normalize(s){
       return (s || "")
         .toLowerCase()
@@ -750,7 +760,6 @@
       return t.slice(0, n-1) + "…";
     }
 
-    // UI state
     function setActiveKindUI(){
       btnAll.className = "tbtn";
       btnBuy.className = "tbtn";
@@ -787,7 +796,6 @@
       if (shouldFilterOnMove()) applyFilters();
     });
 
-    // Render / filters
     function applyFilters(){
       const ctype = elType.value;
       const maxP = parseFloat(elMaxPrice.value);
@@ -880,7 +888,7 @@
           const favEl = e.target.closest ? e.target.closest(".fav") : null;
           if (favEl) return;
           const id = parseInt(cards[i].getAttribute("data-id"), 10);
-          focusListing(id, true, true);
+          focusListing(id, true);
         });
       }
 
@@ -896,7 +904,7 @@
       }
     }
 
-    function focusListing(id, openPopup, fromList){
+    function focusListing(id, openPopup){
       const it = LISTINGS.find(x => x.id === id);
       if (!it) return;
 
@@ -931,62 +939,14 @@
               ❤ ${getFavCount(it.id)} favori(s)
             </div>
             ${desc}
-            <button id="contactBtn" style="
-              padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,.12);
-              background:#4ea1ff;color:white;cursor:pointer;width:100%;
-            ">Contacter</button>
           </div>
         `;
 
         try{ m.closePopup(); }catch(e){}
         m.bindPopup(html).openPopup();
-
-        setTimeout(() => {
-          const btn = document.getElementById("contactBtn");
-          if (btn) btn.onclick = () => openModal(it);
-        }, 0);
       });
     }
 
-    // Contact modal
-    const modalContact = document.getElementById("modalContact");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalSubtitle = document.getElementById("modalSubtitle");
-    const modalMsg = document.getElementById("modalMsg");
-    const closeModal = document.getElementById("closeModal");
-    const sendMsg = document.getElementById("sendMsg");
-
-    let currentContact = null;
-
-    function openModal(item){
-      currentContact = item;
-      modalTitle.textContent = "Contacter — " + item.city;
-      modalSubtitle.textContent = "Tu vas contacter la personne pour : " + kindLabel(item.kind) + (item.kind === "rent" ? " (" + periodLabel(item.period || "day") + ")" : "") + ".";
-      modalMsg.value = "";
-      modalContact.classList.add("open");
-    }
-    function closeContact(){
-      modalContact.classList.remove("open");
-      currentContact = null;
-    }
-    closeModal.addEventListener("click", closeContact);
-    modalContact.addEventListener("click", (e) => { if (e.target === modalContact) closeContact(); });
-
-    sendMsg.addEventListener("click", () => {
-      if (!currentContact) return;
-      const msg = modalMsg.value.trim();
-      if (!msg){
-        alert("Écris un message avant d’envoyer 🙂");
-        return;
-      }
-      alert(
-        "Message envoyé (simulation) à: " + currentContact.contact + "\n\n" +
-        "Contenu:\n" + msg
-      );
-      closeContact();
-    });
-
-    // Auth modal helpers
     function openAuth(){
       authErr.style.display = "none";
       authErr.textContent = "";
@@ -1052,7 +1012,6 @@
       try{ await signOut(auth); }catch(e){}
     });
 
-    // Auth state (UI)
     let currentUser = null;
 
     function refreshAuthUI(){
@@ -1061,11 +1020,13 @@
         const email = currentUser.email || "";
         userPill.style.display = "inline-flex";
         userPill.textContent = name ? ("👤 " + name) : ("👤 " + email);
+
         btnAuth.style.display = "none";
         btnLogout.style.display = "inline-flex";
       } else {
         userPill.style.display = "none";
         userPill.textContent = "—";
+
         btnAuth.style.display = "inline-flex";
         btnLogout.style.display = "none";
       }
@@ -1076,14 +1037,11 @@
       refreshAuthUI();
     });
 
-    // Events UI
     btnCreate.addEventListener("click", () => {
       if (!currentUser){
         openAuth();
         return;
       }
-      const c = map.getCenter();
-      try{ localStorage.setItem("cc_last_center", JSON.stringify({lat:c.lat, lng:c.lng})); }catch(e){}
       window.location.href = "create.html";
     });
 
@@ -1117,7 +1075,6 @@
       applyFilters();
     });
 
-    // Init
     setActiveKindUI();
     applyFilters();
     refreshAuthUI();
