@@ -18,8 +18,8 @@
       --muted:#a9b7d6;
       --line:rgba(255,255,255,.08);
       --accent:#4ea1ff;
-      --ok:#38d6a6;
-      --warn:#ffcc66;
+      --ok:#38d6a6;     /* acheter = vert */
+      --warn:#ffcc66;   /* louer = jaune */
       --danger:#ff6b6b;
     }
     *{ box-sizing:border-box; }
@@ -29,103 +29,192 @@
       background:var(--bg);
       color:var(--text);
     }
-    .app{ height:100vh; display:flex; overflow:hidden; }
+    .app{
+      height:100vh;
+      display:flex;
+      overflow:hidden;
+    }
     .sidebar{
-      width:390px; min-width:320px;
+      width:390px;
+      min-width:320px;
       background:var(--panel);
       border-right:1px solid var(--line);
-      display:flex; flex-direction:column;
+      display:flex;
+      flex-direction:column;
     }
-    .top{ padding:14px 14px 10px; border-bottom:1px solid var(--line); }
+    .top{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+    }
 
     .brand{
-      display:flex; gap:10px; align-items:center;
-      margin-bottom:10px; justify-content:space-between;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+      justify-content:space-between;
     }
-    .brand-left{ display:flex; gap:10px; align-items:center; min-width:0; }
+    .brand-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+    }
     .logo{
       width:34px;height:34px;border-radius:10px;
       background:linear-gradient(135deg, var(--accent), #8a7dff);
       display:flex;align-items:center;justify-content:center;
-      font-weight:700; flex:0 0 auto;
+      font-weight:700;
+      flex:0 0 auto;
     }
     .title{ font-weight:800; letter-spacing:.2px; }
     .subtitle{ color:var(--muted); font-size:12px; margin-top:2px; }
 
     .btn{
-      padding:10px 12px; border-radius:12px;
+      padding:10px 12px;
+      border-radius:12px;
       border:1px solid var(--line);
       background:rgba(78,161,255,.15);
-      color:var(--text); cursor:pointer; user-select:none; white-space:nowrap;
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
     }
     .btn:hover{ background:rgba(78,161,255,.22); }
 
     .btn-ghost{
-      padding:10px 12px; border-radius:12px;
+      padding:10px 12px;
+      border-radius:12px;
       border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      color:var(--text); cursor:pointer; user-select:none; white-space:nowrap;
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
     }
     .btn-ghost:hover{ background:rgba(255,255,255,.07); }
 
     .filters{
-      display:grid; grid-template-columns:1fr 1fr;
-      gap:8px; margin-top:10px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:10px;
     }
     label{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
     input, select{
-      width:100%; padding:10px 10px;
-      border-radius:12px; border:1px solid var(--line);
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      color:var(--text); outline:none;
+      color:var(--text);
+      outline:none;
     }
     input::placeholder{ color:rgba(232,238,252,.45); }
 
-    .row{ grid-column:1 / -1; display:flex; gap:8px; align-items:flex-end; }
+    .row{
+      grid-column:1 / -1;
+      display:flex;
+      gap:8px;
+      align-items:flex-end;
+    }
 
-    .togglebar{ grid-column:1 / -1; display:flex; gap:8px; }
+    .togglebar{
+      grid-column:1 / -1;
+      display:flex;
+      gap:8px;
+    }
     .tbtn{
-      flex:1; padding:10px 12px; border-radius:12px;
+      flex:1;
+      padding:10px 12px;
+      border-radius:12px;
       border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      color:var(--text); cursor:pointer; text-align:center; user-select:none;
+      color:var(--text);
+      cursor:pointer;
+      text-align:center;
+      user-select:none;
     }
     .tbtn:hover{ background:rgba(255,255,255,.07); }
-    .tbtn.active-buy{ border-color:rgba(56,214,166,.45); background:rgba(56,214,166,.14); }
-    .tbtn.active-rent{ border-color:rgba(255,204,102,.55); background:rgba(255,204,102,.14); }
-    .tbtn.active-all{ border-color:rgba(78,161,255,.45); background:rgba(78,161,255,.14); }
+    .tbtn.active-buy{
+      border-color:rgba(56,214,166,.45);
+      background:rgba(56,214,166,.14);
+    }
+    .tbtn.active-rent{
+      border-color:rgba(255,204,102,.55);
+      background:rgba(255,204,102,.14);
+    }
+    .tbtn.active-all{
+      border-color:rgba(78,161,255,.45);
+      background:rgba(78,161,255,.14);
+    }
 
-    .periodbar{ grid-column:1 / -1; display:none; gap:8px; flex-wrap:wrap; }
+    .periodbar{
+      grid-column:1 / -1;
+      display:none;
+      gap:8px;
+      flex-wrap:wrap;
+    }
     .pbtn{
-      flex:1; min-width:72px; padding:9px 10px;
-      border-radius:999px; border:1px solid var(--line);
+      flex:1;
+      min-width:72px;
+      padding:9px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      color:var(--text); cursor:pointer; text-align:center; user-select:none; font-size:12px;
+      color:var(--text);
+      cursor:pointer;
+      text-align:center;
+      user-select:none;
+      font-size:12px;
     }
     .pbtn:hover{ background:rgba(255,255,255,.07); }
-    .pbtn.active{ border-color:rgba(255,204,102,.55); background:rgba(255,204,102,.14); }
+    .pbtn.active{
+      border-color:rgba(255,204,102,.55);
+      background:rgba(255,204,102,.14);
+    }
 
-    .list{ padding:10px; overflow:auto; flex:1; }
-    .meta{ color:var(--muted); font-size:12px; padding:8px 6px 10px; }
+    .list{
+      padding:10px;
+      overflow:auto;
+      flex:1;
+    }
+    .meta{
+      color:var(--muted);
+      font-size:12px;
+      padding:8px 6px 10px;
+    }
 
     .card{
       position:relative;
       background:var(--card);
       border:1px solid var(--line);
       border-radius:16px;
-      padding:12px; margin-bottom:10px;
-      cursor:pointer; overflow:hidden;
+      padding:12px;
+      margin-bottom:10px;
+      cursor:pointer;
+      overflow:hidden;
     }
     .card:hover{ border-color:rgba(78,161,255,.35); }
-    .card h3{ margin:0 0 6px; font-size:14px; line-height:1.2; }
+    .card h3{
+      margin:0 0 6px;
+      font-size:14px;
+      line-height:1.2;
+    }
 
     .fav{
-      position:absolute; top:10px; right:10px;
-      display:flex; align-items:center; gap:6px;
-      padding:6px 8px; border-radius:999px;
+      position:absolute;
+      top:10px;
+      right:10px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 8px;
+      border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.18);
-      cursor:pointer; user-select:none;
+      cursor:pointer;
+      user-select:none;
     }
     .fav:hover{ background:rgba(0,0,0,.28); }
     .fav .heart{ font-size:14px; line-height:1; color:rgba(255,255,255,.85); }
@@ -134,10 +223,13 @@
 
     .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
     .chip{
-      font-size:12px; color:var(--text);
+      font-size:12px;
+      color:var(--text);
       border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      padding:5px 8px; border-radius:999px; white-space:nowrap;
+      padding:5px 8px;
+      border-radius:999px;
+      white-space:nowrap;
     }
     .chip.ok{ border-color:rgba(56,214,166,.35); }
     .chip.warn{ border-color:rgba(255,204,102,.35); }
@@ -148,24 +240,33 @@
     #map{ flex:1; height:100%; }
 
     .authbar{
-      display:flex; gap:8px; align-items:center;
-      justify-content:flex-end; margin-left:10px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      margin-left:10px;
     }
     .userpill{
       display:none;
       max-width:220px;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-      font-size:12px; color:rgba(232,238,252,.9);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:12px;
+      color:rgba(232,238,252,.9);
       border:1px solid var(--line);
       background:rgba(255,255,255,.04);
-      padding:8px 10px; border-radius:999px;
+      padding:8px 10px;
+      border-radius:999px;
     }
 
     .modal{
       position:fixed; inset:0;
-      display:none; align-items:center; justify-content:center;
+      display:none;
+      align-items:center; justify-content:center;
       background:rgba(0,0,0,.55);
-      padding:20px; z-index:9999;
+      padding:20px;
+      z-index:9999;
     }
     .modal.open{ display:flex; }
     .modal-card{
@@ -188,7 +289,10 @@
       color:var(--text);
       outline:none;
     }
-    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+    .modal-actions{
+      display:flex; gap:8px; justify-content:flex-end;
+      margin-top:10px;
+    }
 
     .auth-grid{
       display:grid;
@@ -328,7 +432,7 @@
 
         <div class="full err" id="authErr">—</div>
         <div class="full hint">
-          Astuce : en test, utilise Google (le plus simple). Email/Mdp fonctionne aussi.
+          Astuce : sur GitHub Pages, Google marche si tu as ajouté ton domaine dans "Authorized domains".
         </div>
       </div>
 
@@ -338,7 +442,7 @@
     </div>
   </div>
 
-  <!-- ✅ SCRIPT PRINCIPAL + FIREBASE -->
+  <!-- ✅ SCRIPT PRINCIPAL (MODULE) + FIREBASE CDN -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
@@ -351,12 +455,13 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // ✅ TON firebaseConfig (OK)
+    // ✅ Ta config Firebase (CDN only)
     const firebaseConfig = {
       apiKey: "AIzaSyBcEfQ7YMg0BxDv5NJmedI0Zc0AfEs3EEI",
       authDomain: "conteneurconnect.firebaseapp.com",
       projectId: "conteneurconnect",
-      storageBucket: "conteneurconnect.firebasestorage.app",
+      // GitHub Pages / web: la valeur standard est appspot.com
+      storageBucket: "conteneurconnect.appspot.com",
       messagingSenderId: "473846512338",
       appId: "1:473846512338:web:6b95857666759500f5cb0b",
       measurementId: "G-WKNQN9GFS2"
@@ -366,14 +471,20 @@
     const auth = getAuth(fbApp);
     const googleProvider = new GoogleAuthProvider();
 
+    /* =========================
+       Helpers JSON safe
+       ========================= */
     function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
 
-    // Favoris (local)
+    /* =========================
+       Favoris (prototype local)
+       ========================= */
     function loadFavs(){
       const o = safeJsonParse(localStorage.getItem("cc_favs"));
       return (o && typeof o === "object") ? o : {};
     }
     function saveFavs(o){ localStorage.setItem("cc_favs", JSON.stringify(o)); }
+
     function loadFavCounts(){
       const o = safeJsonParse(localStorage.getItem("cc_fav_counts"));
       return (o && typeof o === "object") ? o : {};
@@ -405,7 +516,9 @@
       saveFavCounts(FAV_COUNTS);
     }
 
-    // Données (8 annonces)
+    /* =========================
+       Données (8 annonces)
+       ========================= */
     const BASE_LISTINGS = [
       { id:1, kind:"buy", class:"A", title:"Conteneur 20ft — stockage sécurisé", ctype:"20ft", city:"Paris", price:2200, lat:48.8566, lng:2.3522,
         tags:["stockage","accès 24/7"], contact:"contact@exemple.com",
@@ -453,14 +566,19 @@
       const arr = safeJsonParse(raw);
       return Array.isArray(arr) ? arr : [];
     }
+
     let LISTINGS = BASE_LISTINGS.concat(loadUserListings());
 
-    // Etat filtres
+    /* =========================
+       Etat filtres
+       ========================= */
     let filterKind = "all";
     let filterPeriod = "day";
     let ignoreNextMoveEnd = false;
 
-    // UI refs
+    /* =========================
+       UI refs
+       ========================= */
     const btnCreate = document.getElementById("btnCreate");
     const btnAll = document.getElementById("btnAll");
     const btnBuy = document.getElementById("btnBuy");
@@ -490,21 +608,30 @@
     const authPass = document.getElementById("authPass");
     const authErr = document.getElementById("authErr");
 
-    // Map
+    /* =========================
+       Map
+       ========================= */
     const map = L.map("map", { zoomControl:true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
 
-    const FR_BOUNDS = L.latLngBounds(L.latLng(41.0, -5.6), L.latLng(51.6, 9.9));
+    const FR_BOUNDS = L.latLngBounds(
+      L.latLng(41.0, -5.6),
+      L.latLng(51.6,  9.9)
+    );
     function fitFrance(){ map.fitBounds(FR_BOUNDS, { padding:[20,20] }); }
     fitFrance();
 
-    // Markers
+    /* =========================
+       Markers
+       ========================= */
     const markersById = Object.create(null);
 
-    function markerColor(kind){ return (kind === "buy") ? "#38d6a6" : "#ffcc66"; }
+    function markerColor(kind){
+      return (kind === "buy") ? "#38d6a6" : "#ffcc66";
+    }
     function makeDivIcon(kind){
       const c = markerColor(kind);
       const html = `
@@ -519,6 +646,7 @@
     function ensureMarker(item){
       let m = markersById[item.id];
       if (m) return m;
+
       m = L.marker([item.lat, item.lng], { icon: makeDivIcon(item.kind) });
       m.on("click", () => focusListing(item.id, true, false));
       m.addTo(map);
@@ -533,12 +661,18 @@
     }
     function showMarkers(items){
       hideAllMarkers();
-      for (let i=0;i<items.length;i++) ensureMarker(items[i]).addTo(map);
+      for (let i=0;i<items.length;i++){
+        ensureMarker(items[i]).addTo(map);
+      }
     }
 
-    // Helpers
+    /* =========================
+       Helpers
+       ========================= */
     function normalize(s){
-      return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
     function kmBetween(lat1, lng1, lat2, lng2){
       const R = 6371;
@@ -565,7 +699,9 @@
       if (p === "year") return "année";
       return p;
     }
-    function kindLabel(kind){ return (kind === "buy") ? "Acheter" : "Louer"; }
+    function kindLabel(kind){
+      return (kind === "buy") ? "Acheter" : "Louer";
+    }
     function classChip(cls){
       const c = (cls || "B").toUpperCase();
       if (c === "A") return `<span class="chip classA">Classe A</span>`;
@@ -580,17 +716,27 @@
       if (item.kind === "buy") return `<span class="chip ok">Acheter</span>`;
       return `<span class="chip warn">Louer</span>`;
     }
-    function firstPhoto(item){ return (item.photos && item.photos.length) ? item.photos[0] : ""; }
+    function firstPhoto(item){
+      if (item.photos && item.photos.length) return item.photos[0];
+      return "";
+    }
     function escapeHtml(s){
-      return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
     function clampText(s, n){
       const t = (s || "").trim();
-      return (t.length <= n) ? t : (t.slice(0, n-1) + "…");
+      if (t.length <= n) return t;
+      return t.slice(0, n-1) + "…";
     }
 
-    // UI state
+    /* =========================
+       UI state
+       ========================= */
     function setActiveKindUI(){
       btnAll.className = "tbtn";
       btnBuy.className = "tbtn";
@@ -603,12 +749,15 @@
       if (filterKind === "rent"){
         periodBar.style.display = "flex";
         priceLabel.textContent = "Prix max (€/ " + periodLabel(filterPeriod) + ")";
+        elMaxPrice.placeholder = "ex: 25";
       } else if (filterKind === "buy"){
         periodBar.style.display = "none";
         priceLabel.textContent = "Prix max (€)";
+        elMaxPrice.placeholder = "ex: 4500";
       } else {
         periodBar.style.display = "none";
         priceLabel.textContent = "Prix max";
+        elMaxPrice.placeholder = "ex: 25";
       }
     }
 
@@ -618,11 +767,18 @@
     }
 
     map.on("moveend", () => {
-      if (ignoreNextMoveEnd){ ignoreNextMoveEnd = false; return; }
-      if (shouldFilterOnMove()) applyFilters();
+      if (ignoreNextMoveEnd){
+        ignoreNextMoveEnd = false;
+        return;
+      }
+      if (shouldFilterOnMove()){
+        applyFilters();
+      }
     });
 
-    // Render / filters
+    /* =========================
+       Render / filters
+       ========================= */
     function applyFilters(){
       const ctype = elType.value;
       const maxP = parseFloat(elMaxPrice.value);
@@ -737,13 +893,22 @@
 
       const m = ensureMarker(it);
       ignoreNextMoveEnd = true;
+
       map.setView([it.lat, it.lng], Math.max(map.getZoom(), 10), { animate:true });
+
+      if (fromList && window.matchMedia && window.matchMedia("(max-width: 860px)").matches){
+        const mapEl = document.getElementById("map");
+        if (mapEl && mapEl.scrollIntoView){
+          mapEl.scrollIntoView({ behavior:"smooth", block:"start" });
+        }
+        setTimeout(() => { try{ map.invalidateSize(); }catch(e){} }, 250);
+      }
 
       if (!openPopup) return;
 
       map.once("moveend", () => {
-        const photos = (it.photos && it.photos.length) ? it.photos.slice(0,5) : [];
         let gallery = "";
+        const photos = (it.photos && it.photos.length) ? it.photos.slice(0,5) : [];
         if (photos.length){
           gallery += `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px">`;
           for (let i=0;i<photos.length;i++){
@@ -771,26 +936,68 @@
             ">Contacter</button>
           </div>
         `;
+
         try{ m.closePopup(); }catch(e){}
         m.bindPopup(html).openPopup();
+
+        setTimeout(() => {
+          const btn = document.getElementById("contactBtn");
+          if (btn) btn.onclick = () => openModal(it);
+        }, 0);
       });
     }
 
-    // Contact modal (simple)
+    /* =========================
+       Contact modal
+       ========================= */
     const modalContact = document.getElementById("modalContact");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalMsg = document.getElementById("modalMsg");
-    document.getElementById("closeModal").addEventListener("click", () => modalContact.classList.remove("open"));
-    modalContact.addEventListener("click", (e) => { if (e.target === modalContact) modalContact.classList.remove("open"); });
+    const closeModal = document.getElementById("closeModal");
+    const sendMsg = document.getElementById("sendMsg");
 
-    // Auth modal
+    let currentContact = null;
+
+    function openModal(item){
+      currentContact = item;
+      modalTitle.textContent = "Contacter — " + item.city;
+      modalSubtitle.textContent = "Tu vas contacter la personne pour : " + kindLabel(item.kind) + (item.kind === "rent" ? " (" + periodLabel(item.period || "day") + ")" : "") + ".";
+      modalMsg.value = "";
+      modalContact.classList.add("open");
+    }
+    function closeContact(){
+      modalContact.classList.remove("open");
+      currentContact = null;
+    }
+    closeModal.addEventListener("click", closeContact);
+    modalContact.addEventListener("click", (e) => { if (e.target === modalContact) closeContact(); });
+
+    sendMsg.addEventListener("click", () => {
+      if (!currentContact) return;
+      const msg = modalMsg.value.trim();
+      if (!msg){
+        alert("Écris un message avant d’envoyer 🙂");
+        return;
+      }
+      alert(
+        "Message envoyé (simulation) à: " + currentContact.contact + "\n\n" +
+        "Contenu:\n" + msg
+      );
+      closeContact();
+    });
+
+    /* =========================
+       Auth modal helpers
+       ========================= */
     function openAuth(){
       authErr.style.display = "none";
       authErr.textContent = "";
       modalAuth.classList.add("open");
     }
-    function closeAuthModal(){ modalAuth.classList.remove("open"); }
+    function closeAuthModal(){
+      modalAuth.classList.remove("open");
+    }
     function setAuthError(msg){
       authErr.textContent = msg || "Erreur";
       authErr.style.display = "block";
@@ -805,39 +1012,56 @@
         await signInWithPopup(auth, googleProvider);
         closeAuthModal();
       }catch(e){
-        setAuthError("Connexion Google impossible. Vérifie 'Authorized domains' (et ouvre via http/https, pas file://).");
+        setAuthError("Connexion Google impossible. Vérifie 'Authorized domains' sur Firebase (et que tu es bien en https).");
+        console.error(e);
       }
     });
 
     btnSignIn.addEventListener("click", async () => {
       const email = (authEmail.value || "").trim();
       const pass = (authPass.value || "").trim();
-      if (!email || !pass){ setAuthError("Entre un email et un mot de passe."); return; }
+      if (!email || !pass){
+        setAuthError("Entre un email et un mot de passe.");
+        return;
+      }
       try{
         await signInWithEmailAndPassword(auth, email, pass);
         closeAuthModal();
       }catch(e){
         setAuthError("Impossible de se connecter. Vérifie l’email/mot de passe.");
+        console.error(e);
       }
     });
 
     btnSignUp.addEventListener("click", async () => {
       const email = (authEmail.value || "").trim();
       const pass = (authPass.value || "").trim();
-      if (!email || !pass){ setAuthError("Entre un email et un mot de passe."); return; }
-      if (pass.length < 6){ setAuthError("Mot de passe trop court (min 6 caractères)."); return; }
+      if (!email || !pass){
+        setAuthError("Entre un email et un mot de passe.");
+        return;
+      }
+      if (pass.length < 6){
+        setAuthError("Mot de passe trop court (min 6 caractères).");
+        return;
+      }
       try{
         await createUserWithEmailAndPassword(auth, email, pass);
         closeAuthModal();
       }catch(e){
         setAuthError("Impossible de créer le compte (email déjà utilisé ?).");
+        console.error(e);
       }
     });
 
-    btnLogout.addEventListener("click", async () => { try{ await signOut(auth); }catch(e){} });
+    btnLogout.addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){}
+    });
 
-    // Auth state UI
+    /* =========================
+       Auth state (UI)
+       ========================= */
     let currentUser = null;
+
     function refreshAuthUI(){
       if (currentUser){
         const name = currentUser.displayName || "";
@@ -848,15 +1072,27 @@
         btnLogout.style.display = "inline-flex";
       } else {
         userPill.style.display = "none";
+        userPill.textContent = "—";
         btnAuth.style.display = "inline-flex";
         btnLogout.style.display = "none";
       }
     }
-    onAuthStateChanged(auth, (user) => { currentUser = user || null; refreshAuthUI(); });
 
-    // Events UI
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
+      refreshAuthUI();
+    });
+
+    /* =========================
+       Events UI
+       ========================= */
     btnCreate.addEventListener("click", () => {
-      if (!currentUser){ openAuth(); return; }
+      if (!currentUser){
+        openAuth();
+        return;
+      }
+      const c = map.getCenter();
+      try{ localStorage.setItem("cc_last_center", JSON.stringify({lat:c.lat, lng:c.lng})); }catch(e){}
       window.location.href = "create.html";
     });
 
@@ -871,6 +1107,7 @@
       if (!p) return;
 
       filterPeriod = p;
+
       const btns = periodBar.querySelectorAll(".pbtn");
       for (let i=0;i<btns.length;i++) btns[i].classList.remove("active");
       t.classList.add("active");
@@ -884,7 +1121,10 @@
     elQ.addEventListener("input", applyFilters);
     elRadius.addEventListener("input", applyFilters);
 
-    elReset.addEventListener("click", () => { fitFrance(); applyFilters(); });
+    elReset.addEventListener("click", () => {
+      fitFrance();
+      applyFilters();
+    });
 
     // Init
     setActiveKindUI();
