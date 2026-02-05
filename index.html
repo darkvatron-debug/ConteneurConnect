@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ContainerConnect — Carte France</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b33;
+      --card:#122244;
+      --text:#e8eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.08);
+      --accent:#4ea1ff;
+      --ok:#38d6a6;
+      --warn:#ffcc66;
+      --danger:#ff6b6b;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .app{ height:100vh; display:flex; overflow:hidden; }
+    .sidebar{
+      width:390px; min-width:320px;
+      background:var(--panel);
+      border-right:1px solid var(--line);
+      display:flex; flex-direction:column;
+    }
+    .top{ padding:14px 14px 10px; border-bottom:1px solid var(--line); }
+
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      margin-bottom:10px; justify-content:space-between;
+    }
+    .brand-left{ display:flex; gap:10px; align-items:center; min-width:0; }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(135deg, var(--accent), #8a7dff);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700; flex:0 0 auto;
+    }
+    .title{ font-weight:800; letter-spacing:.2px; }
+    .subtitle{ color:var(--muted); font-size:12px; margin-top:2px; }
+
+    .btn{
+      padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(78,161,255,.15);
+      color:var(--text); cursor:pointer; user-select:none; white-space:nowrap;
+    }
+    .btn:hover{ background:rgba(78,161,255,.22); }
+
+    .btn-ghost{
+      padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text); cursor:pointer; user-select:none; white-space:nowrap;
+    }
+    .btn-ghost:hover{ background:rgba(255,255,255,.07); }
+
+    .filters{
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; margin-top:10px;
+    }
+    label{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+    input, select{
+      width:100%; padding:10px 10px;
+      border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text); outline:none;
+    }
+    input::placeholder{ color:rgba(232,238,252,.45); }
+
+    .row{ grid-column:1 / -1; display:flex; gap:8px; align-items:flex-end; }
+
+    .togglebar{ grid-column:1 / -1; display:flex; gap:8px; }
+    .tbtn{
+      flex:1; padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text); cursor:pointer; text-align:center; user-select:none;
+    }
+    .tbtn:hover{ background:rgba(255,255,255,.07); }
+    .tbtn.active-buy{ border-color:rgba(56,214,166,.45); background:rgba(56,214,166,.14); }
+    .tbtn.active-rent{ border-color:rgba(255,204,102,.55); background:rgba(255,204,102,.14); }
+    .tbtn.active-all{ border-color:rgba(78,161,255,.45); background:rgba(78,161,255,.14); }
+
+    .periodbar{ grid-column:1 / -1; display:none; gap:8px; flex-wrap:wrap; }
+    .pbtn{
+      flex:1; min-width:72px; padding:9px 10px;
+      border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text); cursor:pointer; text-align:center; user-select:none; font-size:12px;
+    }
+    .pbtn:hover{ background:rgba(255,255,255,.07); }
+    .pbtn.active{ border-color:rgba(255,204,102,.55); background:rgba(255,204,102,.14); }
+
+    .list{ padding:10px; overflow:auto; flex:1; }
+    .meta{ color:var(--muted); font-size:12px; padding:8px 6px 10px; }
+
+    .card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px; margin-bottom:10px;
+      cursor:pointer; overflow:hidden;
+    }
+    .card:hover{ border-color:rgba(78,161,255,.35); }
+    .card h3{ margin:0 0 6px; font-size:14px; line-height:1.2; }
+
+    .fav{
+      position:absolute; top:10px; right:10px;
+      display:flex; align-items:center; gap:6px;
+      padding:6px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      cursor:pointer; user-select:none;
+    }
+    .fav:hover{ background:rgba(0,0,0,.28); }
+    .fav .heart{ font-size:14px; line-height:1; color:rgba(255,255,255,.85); }
+    .fav.on .heart{ color:var(--danger); }
+    .fav .count{ font-size:12px; color:rgba(255,255,255,.90); min-width:16px; text-align:right; }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+    .chip{
+      font-size:12px; color:var(--text);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:5px 8px; border-radius:999px; white-space:nowrap;
+    }
+    .chip.ok{ border-color:rgba(56,214,166,.35); }
+    .chip.warn{ border-color:rgba(255,204,102,.35); }
+    .chip.classA{ border-color:rgba(56,214,166,.55); }
+    .chip.classB{ border-color:rgba(78,161,255,.55); }
+    .chip.classC{ border-color:rgba(255,107,107,.55); }
+
+    #map{ flex:1; height:100%; }
+
+    .authbar{
+      display:flex; gap:8px; align-items:center;
+      justify-content:flex-end; margin-left:10px;
+    }
+    .userpill{
+      display:none;
+      max-width:220px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      font-size:12px; color:rgba(232,238,252,.9);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:8px 10px; border-radius:999px;
+    }
+
+    .modal{
+      position:fixed; inset:0;
+      display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.55);
+      padding:20px; z-index:9999;
+    }
+    .modal.open{ display:flex; }
+    .modal-card{
+      width:min(560px, 100%);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+    .modal-card h2{ margin:0 0 8px; font-size:16px; }
+    .modal-card p{ margin:0 0 10px; color:var(--muted); font-size:13px; }
+    textarea{
+      width:100%;
+      min-height:110px;
+      resize:vertical;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+    }
+    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+
+    .auth-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .auth-grid .full{ grid-column:1 / -1; }
+    .hint{ color:var(--muted); font-size:12px; margin-top:8px; }
+    .err{ color:#ffb3b3; font-size:12px; margin-top:8px; display:none; }
+
+    @media (max-width: 860px){
+      .app{ flex-direction:column; }
+      .sidebar{ width:100%; height:52vh; }
+      #map{ height:48vh; }
+      .userpill{ max-width:140px; }
+      .auth-grid{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="top">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">CC</div>
+            <div style="min-width:0;">
+              <div class="title">ContainerConnect</div>
+              <div class="subtitle">Achat & location de conteneurs — carte France</div>
+            </div>
+          </div>
+
+          <div class="authbar">
+            <div class="userpill" id="userPill">—</div>
+            <button class="btn-ghost" id="btnAuth">Se connecter</button>
+            <button class="btn-ghost" id="btnLogout" style="display:none;">Déconnexion</button>
+            <button class="btn" id="btnCreate">Déposer</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="togglebar">
+            <div class="tbtn active-all" id="btnAll">Tous</div>
+            <div class="tbtn" id="btnBuy">Acheter</div>
+            <div class="tbtn" id="btnRent">Louer</div>
+          </div>
+
+          <div class="periodbar" id="periodBar">
+            <div class="pbtn active" data-period="day">Jour</div>
+            <div class="pbtn" data-period="week">Semaine</div>
+            <div class="pbtn" data-period="month">Mois</div>
+            <div class="pbtn" data-period="year">Année</div>
+          </div>
+
+          <div>
+            <label for="ctype">Type de conteneur</label>
+            <select id="ctype">
+              <option value="all">Tous</option>
+              <option value="20ft">20ft</option>
+              <option value="40ft">40ft</option>
+              <option value="reefer">Reefer (frigo)</option>
+              <option value="open-top">Open-top</option>
+            </select>
+          </div>
+
+          <div>
+            <label id="priceLabel" for="maxPrice">Prix max</label>
+            <input id="maxPrice" type="number" min="0" step="1" placeholder="ex: 25">
+          </div>
+
+          <div>
+            <label for="q">Ville / mot-clé</label>
+            <input id="q" type="text" placeholder="ex: Lyon, stockage, chantier…">
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="radius">Rayon (km) autour du centre carte</label>
+              <input id="radius" type="number" min="0" step="1" placeholder="ex: 30">
+            </div>
+            <button class="btn-ghost" id="resetView" title="Recentrer sur la France">France</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="list">
+        <div class="meta" id="count">—</div>
+        <div id="results"></div>
+      </div>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <!-- Modal contact -->
+  <div class="modal" id="modalContact">
+    <div class="modal-card">
+      <h2 id="modalTitle">Contacter</h2>
+      <p id="modalSubtitle">Envoie un message pour être mis en relation.</p>
+      <textarea id="modalMsg" placeholder="Bonjour, je suis intéressé(e). Prix, disponibilités, lieu, conditions…"></textarea>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="closeModal">Fermer</button>
+        <button class="btn" id="sendMsg">Envoyer</button>
+      </div>
+      <p style="margin-top:10px; font-size:12px; color:var(--muted);">
+        (Prototype) Simulation. En prod : comptes + base de données.
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal Auth -->
+  <div class="modal" id="modalAuth">
+    <div class="modal-card">
+      <h2>Connexion / Inscription</h2>
+      <p>Connecte-toi pour publier une annonce, mettre en favoris, etc.</p>
+
+      <div class="auth-grid">
+        <div class="full">
+          <button class="btn" id="btnGoogle" style="width:100%;">Continuer avec Google</button>
+        </div>
+
+        <div>
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="ex: toi@mail.com">
+        </div>
+        <div>
+          <label for="authPass">Mot de passe</label>
+          <input id="authPass" type="password" placeholder="••••••••">
+        </div>
+
+        <div class="full" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-ghost" id="btnSignIn" style="flex:1; min-width:160px;">Se connecter</button>
+          <button class="btn-ghost" id="btnSignUp" style="flex:1; min-width:160px;">Créer un compte</button>
+        </div>
+
+        <div class="full err" id="authErr">—</div>
+        <div class="full hint">
+          Astuce : en test, utilise Google (le plus simple). Email/Mdp fonctionne aussi.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="closeAuth">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ SCRIPT PRINCIPAL + FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // ✅ TON firebaseConfig (OK)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcEfQ7YMg0BxDv5NJmedI0Zc0AfEs3EEI",
+      authDomain: "conteneurconnect.firebaseapp.com",
+      projectId: "conteneurconnect",
+      storageBucket: "conteneurconnect.firebasestorage.app",
+      messagingSenderId: "473846512338",
+      appId: "1:473846512338:web:6b95857666759500f5cb0b",
+      measurementId: "G-WKNQN9GFS2"
+    };
+
+    const fbApp = initializeApp(firebaseConfig);
+    const auth = getAuth(fbApp);
+    const googleProvider = new GoogleAuthProvider();
+
+    function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+
+    // Favoris (local)
+    function loadFavs(){
+      const o = safeJsonParse(localStorage.getItem("cc_favs"));
+      return (o && typeof o === "object") ? o : {};
+    }
+    function saveFavs(o){ localStorage.setItem("cc_favs", JSON.stringify(o)); }
+    function loadFavCounts(){
+      const o = safeJsonParse(localStorage.getItem("cc_fav_counts"));
+      return (o && typeof o === "object") ? o : {};
+    }
+    function saveFavCounts(o){ localStorage.setItem("cc_fav_counts", JSON.stringify(o)); }
+
+    let FAVS = loadFavs();
+    let FAV_COUNTS = loadFavCounts();
+
+    function ensureFavCount(id){
+      const k = String(id);
+      if (typeof FAV_COUNTS[k] !== "number") FAV_COUNTS[k] = 0;
+    }
+    function isFav(id){ return !!FAVS[String(id)]; }
+    function getFavCount(id){ ensureFavCount(id); return FAV_COUNTS[String(id)] || 0; }
+    function toggleFav(id){
+      const k = String(id);
+      const currently = !!FAVS[k];
+      ensureFavCount(id);
+
+      if (currently){
+        delete FAVS[k];
+        FAV_COUNTS[k] = Math.max(0, (FAV_COUNTS[k] || 0) - 1);
+      } else {
+        FAVS[k] = true;
+        FAV_COUNTS[k] = (FAV_COUNTS[k] || 0) + 1;
+      }
+      saveFavs(FAVS);
+      saveFavCounts(FAV_COUNTS);
+    }
+
+    // Données (8 annonces)
+    const BASE_LISTINGS = [
+      { id:1, kind:"buy", class:"A", title:"Conteneur 20ft — stockage sécurisé", ctype:"20ft", city:"Paris", price:2200, lat:48.8566, lng:2.3522,
+        tags:["stockage","accès 24/7"], contact:"contact@exemple.com",
+        description:"Conteneur étanche, idéal stockage. Accès 24/7, dépôt sécurisé.",
+        photos:["photos/image1.jpeg"] },
+
+      { id:2, kind:"rent", period:"month", class:"B", title:"Location 40ft pour chantier (2 mois)", ctype:"40ft", city:"Lille", price:300, lat:50.6292, lng:3.0573,
+        tags:["chantier","urgent"], contact:"acheteur@exemple.com",
+        description:"Disponible rapidement. Livraison possible. Durée flexible.",
+        photos:["photos/image2.jpeg"] },
+
+      { id:3, kind:"buy", class:"A", title:"Reefer 40ft — froid négatif", ctype:"reefer", city:"Marseille", price:8500, lat:43.2965, lng:5.3698,
+        tags:["froid","alimentaire"], contact:"cold@exemple.com",
+        description:"Reefer testé, groupe froid OK. Idéal alimentaire/événementiel.",
+        photos:["photos/images.jpeg"] },
+
+      { id:4, kind:"buy", class:"B", title:"Open-top 20ft — chargement par le haut", ctype:"open-top", city:"Bordeaux", price:3500, lat:44.8378, lng:-0.5792,
+        tags:["grue","BTP"], contact:"btp@exemple.com",
+        description:"Open-top pratique pour chargement grue. Bon état général.",
+        photos:["photos/images3.jpeg"] },
+
+      { id:5, kind:"rent", period:"week", class:"C", title:"Location 20ft près de Lyon (stockage)", ctype:"20ft", city:"Lyon", price:80, lat:45.7640, lng:4.8357,
+        tags:["stockage","chantier"], contact:"lyon@exemple.com",
+        description:"Classe C (usage chantier). Location semaine/mois possible.",
+        photos:["photos/image1.jpeg"] },
+
+      { id:6, kind:"buy", class:"B", title:"Conteneur 40ft — dépôt Strasbourg", ctype:"40ft", city:"Strasbourg", price:4200, lat:48.5734, lng:7.7521,
+        tags:["logistique","transport"], contact:"alsace@exemple.com",
+        description:"40ft en bon état, visible sur dépôt. Transport en option.",
+        photos:["photos/image2.jpeg"] },
+
+      { id:7, kind:"rent", period:"day", class:"A", title:"Location 20ft — Nantes, accès camion", ctype:"20ft", city:"Nantes", price:18, lat:47.2184, lng:-1.5536,
+        tags:["camion","pro"], contact:"nantes@exemple.com",
+        description:"Location courte durée. Accès facile camion, dépôt sécurisé.",
+        photos:["photos/images.jpeg"] },
+
+      { id:8, kind:"rent", period:"year", class:"B", title:"Location Reefer — Toulouse (longue durée)", ctype:"reefer", city:"Toulouse", price:5000, lat:43.6047, lng:1.4442,
+        tags:["longue durée","froid"], contact:"event@exemple.com",
+        description:"Reefer en location longue durée. Maintenance suivie.",
+        photos:["photos/images3.jpeg"] }
+    ];
+
+    function loadUserListings(){
+      const raw = localStorage.getItem("cc_listings");
+      const arr = safeJsonParse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }
+    let LISTINGS = BASE_LISTINGS.concat(loadUserListings());
+
+    // Etat filtres
+    let filterKind = "all";
+    let filterPeriod = "day";
+    let ignoreNextMoveEnd = false;
+
+    // UI refs
+    const btnCreate = document.getElementById("btnCreate");
+    const btnAll = document.getElementById("btnAll");
+    const btnBuy = document.getElementById("btnBuy");
+    const btnRent = document.getElementById("btnRent");
+    const periodBar = document.getElementById("periodBar");
+    const priceLabel = document.getElementById("priceLabel");
+
+    const elType = document.getElementById("ctype");
+    const elMaxPrice = document.getElementById("maxPrice");
+    const elQ = document.getElementById("q");
+    const elRadius = document.getElementById("radius");
+    const elResults = document.getElementById("results");
+    const elCount = document.getElementById("count");
+    const elReset = document.getElementById("resetView");
+
+    // Auth UI
+    const userPill = document.getElementById("userPill");
+    const btnAuth = document.getElementById("btnAuth");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const modalAuth = document.getElementById("modalAuth");
+    const closeAuth = document.getElementById("closeAuth");
+    const btnGoogle = document.getElementById("btnGoogle");
+    const btnSignIn = document.getElementById("btnSignIn");
+    const btnSignUp = document.getElementById("btnSignUp");
+    const authEmail = document.getElementById("authEmail");
+    const authPass = document.getElementById("authPass");
+    const authErr = document.getElementById("authErr");
+
+    // Map
+    const map = L.map("map", { zoomControl:true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const FR_BOUNDS = L.latLngBounds(L.latLng(41.0, -5.6), L.latLng(51.6, 9.9));
+    function fitFrance(){ map.fitBounds(FR_BOUNDS, { padding:[20,20] }); }
+    fitFrance();
+
+    // Markers
+    const markersById = Object.create(null);
+
+    function markerColor(kind){ return (kind === "buy") ? "#38d6a6" : "#ffcc66"; }
+    function makeDivIcon(kind){
+      const c = markerColor(kind);
+      const html = `
+        <div style="
+          width:14px;height:14px;border-radius:50%;
+          background:${c};
+          border:2px solid rgba(0,0,0,.35);
+          box-shadow:0 0 0 3px rgba(255,255,255,.25);
+        "></div>`;
+      return L.divIcon({ html, className:"", iconSize:[18,18], iconAnchor:[9,9] });
+    }
+    function ensureMarker(item){
+      let m = markersById[item.id];
+      if (m) return m;
+      m = L.marker([item.lat, item.lng], { icon: makeDivIcon(item.kind) });
+      m.on("click", () => focusListing(item.id, true, false));
+      m.addTo(map);
+      markersById[item.id] = m;
+      return m;
+    }
+    function hideAllMarkers(){
+      for (const id in markersById){
+        const m = markersById[id];
+        if (map.hasLayer(m)) map.removeLayer(m);
+      }
+    }
+    function showMarkers(items){
+      hideAllMarkers();
+      for (let i=0;i<items.length;i++) ensureMarker(items[i]).addTo(map);
+    }
+
+    // Helpers
+    function normalize(s){
+      return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+    function kmBetween(lat1, lng1, lat2, lng2){
+      const R = 6371;
+      const dLat = (lat2-lat1) * Math.PI / 180;
+      const dLng = (lng2-lng1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat/2)*Math.sin(dLat/2) +
+        Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180) *
+        Math.sin(dLng/2)*Math.sin(dLng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R*c;
+    }
+    function prettyType(t){
+      if (t === "20ft") return "20ft";
+      if (t === "40ft") return "40ft";
+      if (t === "reefer") return "Reefer";
+      if (t === "open-top") return "Open-top";
+      return t;
+    }
+    function periodLabel(p){
+      if (p === "day") return "jour";
+      if (p === "week") return "semaine";
+      if (p === "month") return "mois";
+      if (p === "year") return "année";
+      return p;
+    }
+    function kindLabel(kind){ return (kind === "buy") ? "Acheter" : "Louer"; }
+    function classChip(cls){
+      const c = (cls || "B").toUpperCase();
+      if (c === "A") return `<span class="chip classA">Classe A</span>`;
+      if (c === "B") return `<span class="chip classB">Classe B</span>`;
+      return `<span class="chip classC">Classe C</span>`;
+    }
+    function priceSuffix(item){
+      if (item.kind === "rent") return "€ / " + periodLabel(item.period || "day");
+      return "€";
+    }
+    function chipForKind(item){
+      if (item.kind === "buy") return `<span class="chip ok">Acheter</span>`;
+      return `<span class="chip warn">Louer</span>`;
+    }
+    function firstPhoto(item){ return (item.photos && item.photos.length) ? item.photos[0] : ""; }
+    function escapeHtml(s){
+      return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    function clampText(s, n){
+      const t = (s || "").trim();
+      return (t.length <= n) ? t : (t.slice(0, n-1) + "…");
+    }
+
+    // UI state
+    function setActiveKindUI(){
+      btnAll.className = "tbtn";
+      btnBuy.className = "tbtn";
+      btnRent.className = "tbtn";
+
+      if (filterKind === "all") btnAll.className = "tbtn active-all";
+      else if (filterKind === "buy") btnBuy.className = "tbtn active-buy";
+      else btnRent.className = "tbtn active-rent";
+
+      if (filterKind === "rent"){
+        periodBar.style.display = "flex";
+        priceLabel.textContent = "Prix max (€/ " + periodLabel(filterPeriod) + ")";
+      } else if (filterKind === "buy"){
+        periodBar.style.display = "none";
+        priceLabel.textContent = "Prix max (€)";
+      } else {
+        periodBar.style.display = "none";
+        priceLabel.textContent = "Prix max";
+      }
+    }
+
+    function shouldFilterOnMove(){
+      const rad = parseFloat(elRadius.value);
+      return (!isNaN(rad) && rad > 0);
+    }
+
+    map.on("moveend", () => {
+      if (ignoreNextMoveEnd){ ignoreNextMoveEnd = false; return; }
+      if (shouldFilterOnMove()) applyFilters();
+    });
+
+    // Render / filters
+    function applyFilters(){
+      const ctype = elType.value;
+      const maxP = parseFloat(elMaxPrice.value);
+      const q = normalize(elQ.value.trim());
+      const rad = parseFloat(elRadius.value);
+
+      const center = map.getCenter();
+      const clat = center.lat, clng = center.lng;
+
+      const out = [];
+      for (let i=0;i<LISTINGS.length;i++){
+        const it = LISTINGS[i];
+
+        if (filterKind !== "all" && it.kind !== filterKind) continue;
+        if (filterKind === "rent"){
+          const p = it.period || "day";
+          if (p !== filterPeriod) continue;
+        }
+        if (ctype !== "all" && it.ctype !== ctype) continue;
+        if (!isNaN(maxP) && it.price > maxP) continue;
+
+        if (q){
+          const hay = normalize(it.title + " " + it.city + " " + (it.tags ? it.tags.join(" ") : "") + " " + (it.description || ""));
+          if (hay.indexOf(q) === -1) continue;
+        }
+
+        if (!isNaN(rad) && rad > 0){
+          const d = kmBetween(clat, clng, it.lat, it.lng);
+          if (d > rad) continue;
+        }
+
+        out.push(it);
+      }
+
+      render(out);
+      showMarkers(out);
+    }
+
+    function render(items){
+      elCount.textContent = `${items.length} résultat(s) — centre carte: ${map.getCenter().lat.toFixed(2)}, ${map.getCenter().lng.toFixed(2)}`;
+
+      let html = "";
+      for (let i=0;i<items.length;i++){
+        const it = items[i];
+        const thumb = firstPhoto(it);
+        const favOn = isFav(it.id);
+        const favCount = getFavCount(it.id);
+
+        html += `
+          <div class="card" data-id="${it.id}">
+            <div class="fav ${favOn ? "on" : ""}" data-fav-id="${it.id}">
+              <span class="heart">${favOn ? "❤" : "♡"}</span>
+              <span class="count">${favCount}</span>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <img
+                src="${thumb || ''}"
+                alt="photo"
+                style="width:92px; height:70px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04);"
+                onerror="this.style.display='none'"
+              />
+              <div style="flex:1; min-width:0;">
+                <h3 style="margin:0 0 6px; padding-right:64px;">${escapeHtml(it.title)}</h3>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  ${chipForKind(it)}
+                  ${classChip(it.class)}
+                  <span class="chip">${escapeHtml(prettyType(it.ctype))}</span>
+                  <span class="chip">${escapeHtml(it.city)}</span>
+                  <span class="chip">${it.price} ${escapeHtml(priceSuffix(it))}</span>
+                </div>
+
+                ${it.description ? `<div style="margin-top:6px; color:rgba(232,238,252,.78); font-size:12px;">${escapeHtml(clampText(it.description, 86))}</div>` : ""}
+
+                <div class="chips">
+                  ${(it.tags || []).slice(0,3).map(t => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
+                  ${(it.kind === "rent") ? `<span class="chip">Durée: ${escapeHtml(periodLabel(it.period || "day"))}</span>` : ""}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      elResults.innerHTML = html || `<div class="meta">Aucun résultat. Change les filtres ou le rayon.</div>`;
+
+      const cards = elResults.querySelectorAll(".card");
+      for (let i=0;i<cards.length;i++){
+        cards[i].addEventListener("click", (e) => {
+          const favEl = e.target.closest ? e.target.closest(".fav") : null;
+          if (favEl) return;
+          const id = parseInt(cards[i].getAttribute("data-id"), 10);
+          focusListing(id, true, true);
+        });
+      }
+
+      const favs = elResults.querySelectorAll(".fav");
+      for (let i=0;i<favs.length;i++){
+        favs[i].addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = parseInt(favs[i].getAttribute("data-fav-id"), 10);
+          toggleFav(id);
+          applyFilters();
+        });
+      }
+    }
+
+    function focusListing(id, openPopup, fromList){
+      const it = LISTINGS.find(x => x.id === id);
+      if (!it) return;
+
+      const m = ensureMarker(it);
+      ignoreNextMoveEnd = true;
+      map.setView([it.lat, it.lng], Math.max(map.getZoom(), 10), { animate:true });
+
+      if (!openPopup) return;
+
+      map.once("moveend", () => {
+        const photos = (it.photos && it.photos.length) ? it.photos.slice(0,5) : [];
+        let gallery = "";
+        if (photos.length){
+          gallery += `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px">`;
+          for (let i=0;i<photos.length;i++){
+            gallery += `<img src="${photos[i]}" style="width:74px; height:52px; object-fit:cover; border-radius:8px; border:1px solid rgba(0,0,0,.12);" onerror="this.style.display='none'"/>`;
+          }
+          gallery += `</div>`;
+        }
+
+        const desc = it.description ? `<div style="margin:8px 0; color:#333; font-size:12px; line-height:1.35;">${escapeHtml(it.description)}</div>` : "";
+
+        const html = `
+          <div style="min-width:260px">
+            ${gallery}
+            <div style="font-weight:700; margin-bottom:6px">${escapeHtml(it.title)}</div>
+            <div style="margin-bottom:6px; color:#333">
+              <b>${it.price} ${escapeHtml(priceSuffix(it))}</b><br>
+              ${escapeHtml(it.city)} — ${kindLabel(it.kind)}${it.kind === "rent" ? " (" + periodLabel(it.period || "day") + ")" : ""}<br>
+              ${escapeHtml(prettyType(it.ctype))} — Classe ${(it.class || "B").toUpperCase()}<br>
+              ❤ ${getFavCount(it.id)} favori(s)
+            </div>
+            ${desc}
+            <button id="contactBtn" style="
+              padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,.12);
+              background:#4ea1ff;color:white;cursor:pointer;width:100%;
+            ">Contacter</button>
+          </div>
+        `;
+        try{ m.closePopup(); }catch(e){}
+        m.bindPopup(html).openPopup();
+      });
+    }
+
+    // Contact modal (simple)
+    const modalContact = document.getElementById("modalContact");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalMsg = document.getElementById("modalMsg");
+    document.getElementById("closeModal").addEventListener("click", () => modalContact.classList.remove("open"));
+    modalContact.addEventListener("click", (e) => { if (e.target === modalContact) modalContact.classList.remove("open"); });
+
+    // Auth modal
+    function openAuth(){
+      authErr.style.display = "none";
+      authErr.textContent = "";
+      modalAuth.classList.add("open");
+    }
+    function closeAuthModal(){ modalAuth.classList.remove("open"); }
+    function setAuthError(msg){
+      authErr.textContent = msg || "Erreur";
+      authErr.style.display = "block";
+    }
+
+    btnAuth.addEventListener("click", openAuth);
+    closeAuth.addEventListener("click", closeAuthModal);
+    modalAuth.addEventListener("click", (e) => { if (e.target === modalAuth) closeAuthModal(); });
+
+    btnGoogle.addEventListener("click", async () => {
+      try{
+        await signInWithPopup(auth, googleProvider);
+        closeAuthModal();
+      }catch(e){
+        setAuthError("Connexion Google impossible. Vérifie 'Authorized domains' (et ouvre via http/https, pas file://).");
+      }
+    });
+
+    btnSignIn.addEventListener("click", async () => {
+      const email = (authEmail.value || "").trim();
+      const pass = (authPass.value || "").trim();
+      if (!email || !pass){ setAuthError("Entre un email et un mot de passe."); return; }
+      try{
+        await signInWithEmailAndPassword(auth, email, pass);
+        closeAuthModal();
+      }catch(e){
+        setAuthError("Impossible de se connecter. Vérifie l’email/mot de passe.");
+      }
+    });
+
+    btnSignUp.addEventListener("click", async () => {
+      const email = (authEmail.value || "").trim();
+      const pass = (authPass.value || "").trim();
+      if (!email || !pass){ setAuthError("Entre un email et un mot de passe."); return; }
+      if (pass.length < 6){ setAuthError("Mot de passe trop court (min 6 caractères)."); return; }
+      try{
+        await createUserWithEmailAndPassword(auth, email, pass);
+        closeAuthModal();
+      }catch(e){
+        setAuthError("Impossible de créer le compte (email déjà utilisé ?).");
+      }
+    });
+
+    btnLogout.addEventListener("click", async () => { try{ await signOut(auth); }catch(e){} });
+
+    // Auth state UI
+    let currentUser = null;
+    function refreshAuthUI(){
+      if (currentUser){
+        const name = currentUser.displayName || "";
+        const email = currentUser.email || "";
+        userPill.style.display = "inline-flex";
+        userPill.textContent = name ? ("👤 " + name) : ("👤 " + email);
+        btnAuth.style.display = "none";
+        btnLogout.style.display = "inline-flex";
+      } else {
+        userPill.style.display = "none";
+        btnAuth.style.display = "inline-flex";
+        btnLogout.style.display = "none";
+      }
+    }
+    onAuthStateChanged(auth, (user) => { currentUser = user || null; refreshAuthUI(); });
+
+    // Events UI
+    btnCreate.addEventListener("click", () => {
+      if (!currentUser){ openAuth(); return; }
+      window.location.href = "create.html";
+    });
+
+    btnAll.addEventListener("click", () => { filterKind = "all"; setActiveKindUI(); applyFilters(); });
+    btnBuy.addEventListener("click", () => { filterKind = "buy"; setActiveKindUI(); applyFilters(); });
+    btnRent.addEventListener("click", () => { filterKind = "rent"; setActiveKindUI(); applyFilters(); });
+
+    periodBar.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t || !t.classList || !t.classList.contains("pbtn")) return;
+      const p = t.getAttribute("data-period");
+      if (!p) return;
+
+      filterPeriod = p;
+      const btns = periodBar.querySelectorAll(".pbtn");
+      for (let i=0;i<btns.length;i++) btns[i].classList.remove("active");
+      t.classList.add("active");
+
+      setActiveKindUI();
+      applyFilters();
+    });
+
+    elType.addEventListener("change", applyFilters);
+    elMaxPrice.addEventListener("input", applyFilters);
+    elQ.addEventListener("input", applyFilters);
+    elRadius.addEventListener("input", applyFilters);
+
+    elReset.addEventListener("click", () => { fitFrance(); applyFilters(); });
+
+    // Init
+    setActiveKindUI();
+    applyFilters();
+    refreshAuthUI();
+  </script>
+</body>
+</html>
