@@ -48,19 +48,16 @@
     }
 
     .brand{
-      position:relative; /* pour placer l'auth en haut à droite */
       display:flex;
       gap:10px;
-      align-items:flex-start;
+      align-items:center;
       margin-bottom:10px;
-      min-height:54px;
     }
     .brand-left{
       display:flex;
       gap:10px;
       align-items:center;
       min-width:0;
-      padding-right:170px; /* laisse de la place aux boutons à droite */
     }
     .logo{
       width:34px;height:34px;border-radius:10px;
@@ -95,45 +92,6 @@
       white-space:nowrap;
     }
     .btn-ghost:hover{ background:rgba(255,255,255,.07); }
-
-    /* --- Auth en haut à droite + bouton icône --- */
-    .authbar{
-      position:absolute;
-      top:0;
-      right:0;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:flex-end;
-    }
-    .userpill{
-      display:none;
-      max-width:170px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      font-size:12px;
-      color:rgba(232,238,252,.9);
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      padding:8px 10px;
-      border-radius:999px;
-    }
-
-    .iconbtn{
-      width:44px;
-      height:44px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      cursor:pointer;
-      user-select:none;
-    }
-    .iconbtn:hover{ background:rgba(255,255,255,.07); }
-    .iconbtn svg{ width:24px; height:24px; display:block; opacity:.95; }
 
     .filters{
       display:grid;
@@ -278,7 +236,57 @@
     .chip.classB{ border-color:rgba(78,161,255,.55); }
     .chip.classC{ border-color:rgba(255,107,107,.55); }
 
-    #map{ flex:1; height:100%; }
+    /* ✅ MAP WRAPPER + overlay auth */
+    .map-wrap{
+      position:relative;
+      flex:1;
+      height:100%;
+    }
+    #map{
+      height:100%;
+      width:100%;
+    }
+
+    /* ✅ Connexion sur la carte */
+    .map-authbar{
+      position:absolute;
+      top:12px;
+      right:12px;
+      z-index:1000; /* au-dessus de la carte */
+      display:flex;
+      gap:8px;
+      align-items:center;
+      pointer-events:auto;
+    }
+    .userpill{
+      display:none;
+      max-width:240px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:12px;
+      color:rgba(232,238,252,.95);
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(15,27,51,.78);
+      backdrop-filter: blur(6px);
+      padding:8px 10px;
+      border-radius:999px;
+    }
+    .iconbtn{
+      width:44px;
+      height:44px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(15,27,51,.78);
+      backdrop-filter: blur(6px);
+      cursor:pointer;
+      user-select:none;
+    }
+    .iconbtn:hover{ background:rgba(15,27,51,.88); }
+    .iconbtn svg{ width:24px; height:24px; display:block; opacity:.95; }
 
     .modal{
       position:fixed; inset:0;
@@ -327,12 +335,10 @@
     @media (max-width: 860px){
       .app{ flex-direction:column; }
       .sidebar{ width:100%; height:52vh; }
-      #map{ height:48vh; }
-      .userpill{ max-width:120px; }
+      .map-wrap{ height:48vh; }
       .auth-grid{ grid-template-columns:1fr; }
-      .brand-left{ padding-right:0; }
-      .authbar{ position:static; margin-left:auto; }
-      .brand{ align-items:center; }
+      .userpill{ max-width:150px; }
+      .map-authbar{ top:10px; right:10px; }
     }
   </style>
 </head>
@@ -348,22 +354,6 @@
               <div class="title">ContainerConnect</div>
               <div class="subtitle">Achat & location de conteneurs — carte France</div>
             </div>
-          </div>
-
-          <!-- ✅ EN HAUT À DROITE -->
-          <div class="authbar">
-            <div class="userpill" id="userPill">—</div>
-
-            <!-- ✅ Bouton icône buste -->
-            <button class="iconbtn" id="btnAuth" title="Se connecter" aria-label="Se connecter">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="8" r="4" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
-                <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-
-            <button class="btn-ghost" id="btnLogout" style="display:none;">Déconnexion</button>
-            <button class="btn" id="btnCreate">Déposer</button>
           </div>
         </div>
 
@@ -409,6 +399,10 @@
             </div>
             <button class="btn-ghost" id="resetView" title="Recentrer sur la France">France</button>
           </div>
+
+          <div class="row">
+            <button class="btn" id="btnCreate" style="width:100%;">Déposer une annonce</button>
+          </div>
         </div>
       </div>
 
@@ -418,7 +412,23 @@
       </div>
     </aside>
 
-    <main id="map"></main>
+    <!-- ✅ Carte + Connexion en overlay -->
+    <div class="map-wrap">
+      <main id="map"></main>
+
+      <div class="map-authbar">
+        <div class="userpill" id="userPill">—</div>
+
+        <button class="iconbtn" id="btnAuth" title="Se connecter" aria-label="Se connecter">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
+            <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <button class="btn-ghost" id="btnLogout" style="display:none;">Déconnexion</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal contact -->
@@ -464,7 +474,7 @@
 
         <div class="full err" id="authErr">—</div>
         <div class="full hint">
-          Astuce : sur GitHub Pages, Google marche si tu as ajouté ton domaine dans "Authorized domains".
+          Sur GitHub Pages, Google marche si tu as ajouté ton domaine dans "Authorized domains".
         </div>
       </div>
 
@@ -474,7 +484,6 @@
     </div>
   </div>
 
-  <!-- ✅ SCRIPT PRINCIPAL (MODULE) + FIREBASE CDN -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
@@ -487,7 +496,7 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // ✅ Ta config Firebase (CDN only)
+    // ✅ Firebase config (CDN)
     const firebaseConfig = {
       apiKey: "AIzaSyBcEfQ7YMg0BxDv5NJmedI0Zc0AfEs3EEI",
       authDomain: "conteneurconnect.firebaseapp.com",
@@ -502,20 +511,14 @@
     const auth = getAuth(fbApp);
     const googleProvider = new GoogleAuthProvider();
 
-    /* =========================
-       Helpers JSON safe
-       ========================= */
     function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
 
-    /* =========================
-       Favoris (prototype local)
-       ========================= */
+    // Favoris (prototype local)
     function loadFavs(){
       const o = safeJsonParse(localStorage.getItem("cc_favs"));
       return (o && typeof o === "object") ? o : {};
     }
     function saveFavs(o){ localStorage.setItem("cc_favs", JSON.stringify(o)); }
-
     function loadFavCounts(){
       const o = safeJsonParse(localStorage.getItem("cc_fav_counts"));
       return (o && typeof o === "object") ? o : {};
@@ -547,9 +550,7 @@
       saveFavCounts(FAV_COUNTS);
     }
 
-    /* =========================
-       Données (8 annonces)
-       ========================= */
+    // Données (8 annonces)
     const BASE_LISTINGS = [
       { id:1, kind:"buy", class:"A", title:"Conteneur 20ft — stockage sécurisé", ctype:"20ft", city:"Paris", price:2200, lat:48.8566, lng:2.3522,
         tags:["stockage","accès 24/7"], contact:"contact@exemple.com",
@@ -599,16 +600,12 @@
     }
     let LISTINGS = BASE_LISTINGS.concat(loadUserListings());
 
-    /* =========================
-       Etat filtres
-       ========================= */
+    // Etat filtres
     let filterKind = "all";
     let filterPeriod = "day";
     let ignoreNextMoveEnd = false;
 
-    /* =========================
-       UI refs
-       ========================= */
+    // UI refs
     const btnCreate = document.getElementById("btnCreate");
     const btnAll = document.getElementById("btnAll");
     const btnBuy = document.getElementById("btnBuy");
@@ -624,7 +621,7 @@
     const elCount = document.getElementById("count");
     const elReset = document.getElementById("resetView");
 
-    // Auth UI
+    // Auth UI (sur la carte)
     const userPill = document.getElementById("userPill");
     const btnAuth = document.getElementById("btnAuth");
     const btnLogout = document.getElementById("btnLogout");
@@ -638,9 +635,7 @@
     const authPass = document.getElementById("authPass");
     const authErr = document.getElementById("authErr");
 
-    /* =========================
-       Map
-       ========================= */
+    // Map
     const map = L.map("map", { zoomControl:true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -654,14 +649,10 @@
     function fitFrance(){ map.fitBounds(FR_BOUNDS, { padding:[20,20] }); }
     fitFrance();
 
-    /* =========================
-       Markers
-       ========================= */
+    // Markers
     const markersById = Object.create(null);
 
-    function markerColor(kind){
-      return (kind === "buy") ? "#38d6a6" : "#ffcc66";
-    }
+    function markerColor(kind){ return (kind === "buy") ? "#38d6a6" : "#ffcc66"; }
     function makeDivIcon(kind){
       const c = markerColor(kind);
       const html = `
@@ -676,7 +667,6 @@
     function ensureMarker(item){
       let m = markersById[item.id];
       if (m) return m;
-
       m = L.marker([item.lat, item.lng], { icon: makeDivIcon(item.kind) });
       m.on("click", () => focusListing(item.id, true, false));
       m.addTo(map);
@@ -696,9 +686,7 @@
       }
     }
 
-    /* =========================
-       Helpers
-       ========================= */
+    // Helpers
     function normalize(s){
       return (s || "")
         .toLowerCase()
@@ -729,9 +717,7 @@
       if (p === "year") return "année";
       return p;
     }
-    function kindLabel(kind){
-      return (kind === "buy") ? "Acheter" : "Louer";
-    }
+    function kindLabel(kind){ return (kind === "buy") ? "Acheter" : "Louer"; }
     function classChip(cls){
       const c = (cls || "B").toUpperCase();
       if (c === "A") return `<span class="chip classA">Classe A</span>`;
@@ -764,9 +750,7 @@
       return t.slice(0, n-1) + "…";
     }
 
-    /* =========================
-       UI state
-       ========================= */
+    // UI state
     function setActiveKindUI(){
       btnAll.className = "tbtn";
       btnBuy.className = "tbtn";
@@ -795,20 +779,15 @@
       const rad = parseFloat(elRadius.value);
       return (!isNaN(rad) && rad > 0);
     }
-
     map.on("moveend", () => {
       if (ignoreNextMoveEnd){
         ignoreNextMoveEnd = false;
         return;
       }
-      if (shouldFilterOnMove()){
-        applyFilters();
-      }
+      if (shouldFilterOnMove()) applyFilters();
     });
 
-    /* =========================
-       Render / filters
-       ========================= */
+    // Render / filters
     function applyFilters(){
       const ctype = elType.value;
       const maxP = parseFloat(elMaxPrice.value);
@@ -926,14 +905,6 @@
 
       map.setView([it.lat, it.lng], Math.max(map.getZoom(), 10), { animate:true });
 
-      if (fromList && window.matchMedia && window.matchMedia("(max-width: 860px)").matches){
-        const mapEl = document.getElementById("map");
-        if (mapEl && mapEl.scrollIntoView){
-          mapEl.scrollIntoView({ behavior:"smooth", block:"start" });
-        }
-        setTimeout(() => { try{ map.invalidateSize(); }catch(e){} }, 250);
-      }
-
       if (!openPopup) return;
 
       map.once("moveend", () => {
@@ -977,9 +948,7 @@
       });
     }
 
-    /* =========================
-       Contact modal
-       ========================= */
+    // Contact modal
     const modalContact = document.getElementById("modalContact");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
@@ -1017,17 +986,13 @@
       closeContact();
     });
 
-    /* =========================
-       Auth modal helpers
-       ========================= */
+    // Auth modal helpers
     function openAuth(){
       authErr.style.display = "none";
       authErr.textContent = "";
       modalAuth.classList.add("open");
     }
-    function closeAuthModal(){
-      modalAuth.classList.remove("open");
-    }
+    function closeAuthModal(){ modalAuth.classList.remove("open"); }
     function setAuthError(msg){
       authErr.textContent = msg || "Erreur";
       authErr.style.display = "block";
@@ -1042,7 +1007,7 @@
         await signInWithPopup(auth, googleProvider);
         closeAuthModal();
       }catch(e){
-        setAuthError("Connexion Google impossible. Vérifie 'Authorized domains' sur Firebase (et que tu es bien en https).");
+        setAuthError("Connexion Google impossible. Vérifie 'Authorized domains' sur Firebase (et que tu es en https).");
         console.error(e);
       }
     });
@@ -1087,9 +1052,7 @@
       try{ await signOut(auth); }catch(e){}
     });
 
-    /* =========================
-       Auth state (UI)
-       ========================= */
+    // Auth state (UI)
     let currentUser = null;
 
     function refreshAuthUI(){
@@ -1113,9 +1076,7 @@
       refreshAuthUI();
     });
 
-    /* =========================
-       Events UI
-       ========================= */
+    // Events UI
     btnCreate.addEventListener("click", () => {
       if (!currentUser){
         openAuth();
