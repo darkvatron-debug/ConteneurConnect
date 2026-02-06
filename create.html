@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Déposer une annonce — ContainerConnect</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
+        <h2 style="margin:0;">Déposer une annonce</h2>
+        <button class="btn-ghost" id="btnHome">Retour</button>
+      </div>
+
+      <p style="margin:8px 0 12px;color:var(--muted);font-size:13px;">
+        Maximum 5 photos. Les annonces sont stockées en local (prototype).
+      </p>
+
+      <div class="grid">
+        <div class="full">
+          <label for="kind">Type d’annonce</label>
+          <select id="kind">
+            <option value="buy">Acheter (vente)</option>
+            <option value="rent">Louer (location)</option>
+          </select>
+        </div>
+
+        <div id="periodWrap" style="display:none;">
+          <label for="period">Période location</label>
+          <select id="period">
+            <option value="day">Jour</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="year">Année</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="ctype">Type de conteneur</label>
+          <select id="ctype">
+            <option value="20ft">20ft</option>
+            <option value="40ft">40ft</option>
+            <option value="reefer">Reefer</option>
+            <option value="open-top">Open-top</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="class">Classe</label>
+          <select id="class">
+            <option value="A">A</option>
+            <option value="B" selected>B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="title">Titre</label>
+          <input id="title" type="text" placeholder="ex: Conteneur 20ft — stockage sécurisé">
+        </div>
+
+        <div>
+          <label for="city">Ville</label>
+          <input id="city" type="text" placeholder="ex: Lyon">
+        </div>
+
+        <div>
+          <label for="price">Prix</label>
+          <input id="price" type="number" min="0" step="1" placeholder="ex: 2500">
+        </div>
+
+        <div class="full">
+          <label for="desc">Description</label>
+          <input id="desc" type="text" placeholder="ex: Livraison possible, bon état, étanche...">
+        </div>
+
+        <div class="full">
+          <label for="photos">Photos (max 5)</label>
+          <input id="photos" type="file" accept="image/*" multiple>
+          <div id="preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
+        </div>
+
+        <div class="full err" id="err">—</div>
+
+        <div class="full" style="display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn" id="btnPublish">Publier</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from "./firebase.js";
+
+    const btnHome = document.getElementById("btnHome");
+    btnHome.addEventListener("click", () => window.location.href = "index.html");
+
+    const kind = document.getElementById("kind");
+    const periodWrap = document.getElementById("periodWrap");
+    const period = document.getElementById("period");
+    const ctype = document.getElementById("ctype");
+    const cls = document.getElementById("class");
+    const title = document.getElementById("title");
+    const city = document.getElementById("city");
+    const price = document.getElementById("price");
+    const desc = document.getElementById("desc");
+    const photos = document.getElementById("photos");
+    const preview = document.getElementById("preview");
+    const btnPublish = document.getElementById("btnPublish");
+    const err = document.getElementById("err");
+
+    function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+
+    function setErr(msg){
+      err.textContent = msg || "Erreur";
+      err.style.display = "block";
+    }
+    function clearErr(){ err.style.display = "none"; err.textContent = ""; }
+
+    function loadUserListings(){
+      const arr = safeJsonParse(localStorage.getItem("cc_listings"));
+      return Array.isArray(arr) ? arr : [];
+    }
+    function saveUserListings(arr){
+      localStorage.setItem("cc_listings", JSON.stringify(arr));
+    }
+
+    function genId(){
+      return Math.floor(Date.now() + Math.random()*1000);
+    }
+
+    function togglePeriod(){
+      periodWrap.style.display = (kind.value === "rent") ? "block" : "none";
+    }
+    kind.addEventListener("change", togglePeriod);
+    togglePeriod();
+
+    // Photos -> dataURL (prototype)
+    let photoData = [];
+
+    photos.addEventListener("change", () => {
+      clearErr();
+      const files = Array.from(photos.files || []);
+      if (files.length > 5){
+        setErr("Maximum 5 photos.");
+        photos.value = "";
+        preview.innerHTML = "";
+        photoData = [];
+        return;
+      }
+
+      preview.innerHTML = "";
+      photoData = [];
+
+      files.forEach((f) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const url = String(reader.result || "");
+          photoData.push(url);
+          const img = document.createElement("img");
+          img.src = url;
+          img.style.width = "88px";
+          img.style.height = "62px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "10px";
+          img.style.border = "1px solid rgba(255,255,255,.12)";
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+      });
+    });
+
+    let currentUser = null;
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
+      if (!currentUser){
+        window.location.href = "auth.html?redirect=" + encodeURIComponent("create.html");
+      }
+    });
+
+    btnPublish.addEventListener("click", () => {
+      clearErr();
+      if (!currentUser) return;
+
+      const t = (title.value || "").trim();
+      const c = (city.value || "").trim();
+      const p = parseFloat(price.value);
+
+      if (!t) return setErr("Titre obligatoire.");
+      if (!c) return setErr("Ville obligatoire.");
+      if (isNaN(p) || p < 0) return setErr("Prix invalide.");
+
+      const listing = {
+        id: genId(),
+        ownerUid: currentUser.uid,
+        kind: kind.value,
+        period: (kind.value === "rent") ? period.value : undefined,
+        class: cls.value,
+        title: t,
+        ctype: ctype.value,
+        city: c,
+        price: Math.round(p),
+        description: (desc.value || "").trim(),
+        tags: [],
+        contact: currentUser.email || "—",
+        // Position: centre France (tu pourras plus tard choisir via carte)
+        lat: 46.56,
+        lng: 2.15,
+        photos: photoData.slice(0,5)
+      };
+
+      const arr = loadUserListings();
+      arr.push(listing);
+      saveUserListings(arr);
+
+      alert("Annonce publiée ✅ (prototype local)");
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
