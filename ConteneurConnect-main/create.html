@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Déposer une annonce — ContainerConnect</title>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b33;
+      --card:#122244;
+      --text:#e8eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.10);
+      --accent:#4ea1ff;
+      --ok:#38d6a6;
+      --warn:#ffcc66;
+      --danger:#ff6b6b;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% 0%, rgba(78,161,255,.18), transparent 60%),
+                  radial-gradient(900px 500px at 90% 20%, rgba(56,214,166,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg, var(--accent), #8a7dff);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.2px;
+      margin:0;
+      font-size:16px;
+    }
+    .subtitle{
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ background:rgba(255,255,255,.07); }
+    .btn.primary{
+      background:rgba(78,161,255,.18);
+      border-color:rgba(78,161,255,.35);
+    }
+    .btn.primary:hover{ background:rgba(78,161,255,.25); }
+    .btn.ok{
+      background:rgba(56,214,166,.14);
+      border-color:rgba(56,214,166,.35);
+    }
+    .btn.ok:hover{ background:rgba(56,214,166,.20); }
+
+    .card{
+      background:rgba(15,27,51,.75);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 18px 36px rgba(0,0,0,.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    label{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin:10px 0 6px;
+    }
+    input, select, textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px;
+      outline:none;
+    }
+    textarea{ min-height:120px; resize:vertical; }
+    input::placeholder, textarea::placeholder{ color:rgba(232,238,252,.45); }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .row > div{ flex:1; min-width:170px; }
+
+    .togglebar{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+    }
+    .tbtn{
+      flex:1;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      cursor:pointer;
+      text-align:center;
+      user-select:none;
+    }
+    .tbtn:hover{ background:rgba(255,255,255,.07); }
+    .tbtn.active-buy{
+      border-color:rgba(56,214,166,.45);
+      background:rgba(56,214,166,.14);
+    }
+    .tbtn.active-rent{
+      border-color:rgba(255,204,102,.55);
+      background:rgba(255,204,102,.14);
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:10px;
+    }
+    .err{
+      display:none;
+      color:#ffb3b3;
+      font-size:12px;
+      margin-top:10px;
+      white-space:pre-line;
+    }
+
+    .photos{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .thumb{
+      width:110px;
+      height:78px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .thumb .x{
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.35);
+      color:rgba(255,255,255,.92);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      line-height:1;
+      user-select:none;
+    }
+    .thumb .x:hover{
+      background:rgba(255,107,107,.20);
+      border-color:rgba(255,107,107,.32);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">CC</div>
+        <div>
+          <p class="title">Déposer une annonce</p>
+          <p class="subtitle">Tu dois être connecté pour publier</p>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn" id="btnBack">← Retour</button>
+        <button class="btn primary" id="btnProfile">Mon profil</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:flex-end;">
+        <div style="flex:2; min-width:260px;">
+          <div class="hint" id="userLine">Vérification connexion…</div>
+        </div>
+        <div style="flex:1; min-width:200px; text-align:right;">
+          <button class="btn" id="btnLogout">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="togglebar">
+        <div class="tbtn active-buy" id="btnBuy">Acheter (vente)</div>
+        <div class="tbtn" id="btnRent">Louer (location)</div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="title">Titre</label>
+          <input id="title" type="text" placeholder="Ex : Conteneur 20ft étanche — bon état" />
+
+          <div class="row">
+            <div>
+              <label for="ctype">Type de conteneur</label>
+              <select id="ctype">
+                <option value="20ft">20ft</option>
+                <option value="40ft">40ft</option>
+                <option value="reefer">Reefer (frigo)</option>
+                <option value="open-top">Open-top</option>
+              </select>
+            </div>
+            <div>
+              <label for="cclass">Classe</label>
+              <select id="cclass">
+                <option value="A">A</option>
+                <option value="B" selected>B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="city">Ville</label>
+              <input id="city" type="text" placeholder="Ex : Lyon" />
+            </div>
+            <div>
+              <label for="price" id="priceLabel">Prix (€)</label>
+              <input id="price" type="number" min="0" step="1" placeholder="Ex : 4500" />
+            </div>
+          </div>
+
+          <div class="row" id="rentRow" style="display:none;">
+            <div>
+              <label for="period">Période de location</label>
+              <select id="period">
+                <option value="day">Jour</option>
+                <option value="week">Semaine</option>
+                <option value="month" selected>Mois</option>
+                <option value="year">Année</option>
+              </select>
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <div class="hint">Le prix est “par période”.</div>
+            </div>
+          </div>
+
+          <label for="desc">Description</label>
+          <textarea id="desc" placeholder="Décris l’état, l’accès, la livraison, les conditions…"></textarea>
+
+          <div class="hint">
+            Photos : max 5 (prototype : stockées sur cet appareil). Pour la vraie version, on passera à Firebase Storage.
+          </div>
+
+          <label for="photos">Ajouter des photos (max 5)</label>
+          <input id="photos" type="file" accept="image/*" multiple />
+
+          <div class="photos" id="photoPreview"></div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 8px; font-size:14px;">Position sur la carte</h3>
+          <div class="hint" style="margin-top:0;">
+            Mets un point sur la carte en remplissant Latitude / Longitude.
+            (Tu peux aussi laisser les valeurs proposées.)
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="lat">Latitude</label>
+              <input id="lat" type="number" step="0.0001" placeholder="Ex : 45.7640" />
+            </div>
+            <div>
+              <label for="lng">Longitude</label>
+              <input id="lng" type="number" step="0.0001" placeholder="Ex : 4.8357" />
+            </div>
+          </div>
+
+          <div class="hint">
+            Astuce : si tu viens de la carte, on a mémorisé le centre et on te pré-remplit lat/lng.
+          </div>
+
+          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn ok" id="btnPublish" style="flex:1; min-width:180px;">Publier l’annonce</button>
+            <button class="btn" id="btnReset" style="flex:1; min-width:180px;">Réinitialiser</button>
+          </div>
+
+          <div class="err" id="errBox">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // ✅ Mets le même firebaseConfig que index/profile
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcEfQ7YMg0BxDv5NJmedI0Zc0AfEs3EEI",
+      authDomain: "conteneurconnect.firebaseapp.com",
+      projectId: "conteneurconnect",
+      storageBucket: "conteneurconnect.appspot.com",
+      messagingSenderId: "473846512338",
+      appId: "1:473846512338:web:6b95857666759500f5cb0b",
+      measurementId: "G-WKNQN9GFS2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // UI refs
+    const btnBack = document.getElementById("btnBack");
+    const btnProfile = document.getElementById("btnProfile");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const btnBuy = document.getElementById("btnBuy");
+    const btnRent = document.getElementById("btnRent");
+    const rentRow = document.getElementById("rentRow");
+    const priceLabel = document.getElementById("priceLabel");
+
+    const elTitle = document.getElementById("title");
+    const elType = document.getElementById("ctype");
+    const elClass = document.getElementById("cclass");
+    const elCity = document.getElementById("city");
+    const elPrice = document.getElementById("price");
+    const elPeriod = document.getElementById("period");
+    const elDesc = document.getElementById("desc");
+
+    const elLat = document.getElementById("lat");
+    const elLng = document.getElementById("lng");
+
+    const elPhotos = document.getElementById("photos");
+    const photoPreview = document.getElementById("photoPreview");
+
+    const btnPublish = document.getElementById("btnPublish");
+    const btnReset = document.getElementById("btnReset");
+
+    const userLine = document.getElementById("userLine");
+    const errBox = document.getElementById("errBox");
+
+    // State
+    let currentUser = null;
+    let kind = "buy"; // buy | rent
+    let photosData = []; // array of dataURL (max 5)
+
+    function showErr(msg){
+      errBox.textContent = msg || "Erreur";
+      errBox.style.display = "block";
+    }
+    function hideErr(){
+      errBox.textContent = "";
+      errBox.style.display = "none";
+    }
+
+    function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+
+    function loadUserListings(){
+      const arr = safeJsonParse(localStorage.getItem("cc_listings"));
+      return Array.isArray(arr) ? arr : [];
+    }
+    function saveUserListings(arr){
+      localStorage.setItem("cc_listings", JSON.stringify(arr));
+    }
+
+    function periodLabel(p){
+      if (p === "day") return "jour";
+      if (p === "week") return "semaine";
+      if (p === "month") return "mois";
+      if (p === "year") return "année";
+      return p;
+    }
+
+    function setKind(newKind){
+      kind = newKind;
+      if (kind === "buy"){
+        btnBuy.className = "tbtn active-buy";
+        btnRent.className = "tbtn";
+        rentRow.style.display = "none";
+        priceLabel.textContent = "Prix (€)";
+        elPrice.placeholder = "Ex : 4500";
+      } else {
+        btnBuy.className = "tbtn";
+        btnRent.className = "tbtn active-rent";
+        rentRow.style.display = "flex";
+        priceLabel.textContent = "Prix (€/ " + periodLabel(elPeriod.value) + ")";
+        elPrice.placeholder = "Ex : 25";
+      }
+    }
+
+    elPeriod.addEventListener("change", () => {
+      if (kind === "rent"){
+        priceLabel.textContent = "Prix (€/ " + periodLabel(elPeriod.value) + ")";
+      }
+    });
+
+    btnBuy.addEventListener("click", () => setKind("buy"));
+    btnRent.addEventListener("click", () => setKind("rent"));
+
+    // Prefill lat/lng from stored center (optional)
+    (function prefillLatLng(){
+      const raw = localStorage.getItem("cc_last_center");
+      const o = safeJsonParse(raw);
+      if (o && typeof o.lat === "number" && typeof o.lng === "number"){
+        elLat.value = o.lat.toFixed(4);
+        elLng.value = o.lng.toFixed(4);
+      } else {
+        // default: center France
+        elLat.value = "46.2276";
+        elLng.value = "2.2137";
+      }
+    })();
+
+    function renderThumbs(){
+      photoPreview.innerHTML = "";
+      for (let i=0;i<photosData.length;i++){
+        const box = document.createElement("div");
+        box.className = "thumb";
+
+        const img = document.createElement("img");
+        img.src = photosData[i];
+        box.appendChild(img);
+
+        const x = document.createElement("div");
+        x.className = "x";
+        x.textContent = "×";
+        x.title = "Supprimer";
+        x.onclick = () => {
+          photosData.splice(i, 1);
+          renderThumbs();
+        };
+        box.appendChild(x);
+
+        photoPreview.appendChild(box);
+      }
+    }
+
+    // Photos upload -> convert to dataURL (max 5, limit size)
+    elPhotos.addEventListener("change", async () => {
+      hideErr();
+      const files = elPhotos.files ? Array.from(elPhotos.files) : [];
+      if (!files.length) return;
+
+      // On garde max 5 au total
+      const remaining = 5 - photosData.length;
+      if (remaining <= 0){
+        showErr("Tu as déjà 5 photos. Supprime-en une pour en ajouter.");
+        elPhotos.value = "";
+        return;
+      }
+
+      const picked = files.slice(0, remaining);
+
+      // Limite de poids par image (1.2MB) — sinon localStorage explose vite
+      for (let i=0;i<picked.length;i++){
+        if (picked[i].size > 1200 * 1024){
+          showErr("Une image est trop lourde (max ~1.2 Mo). Réduis la taille puis réessaye.");
+          elPhotos.value = "";
+          return;
+        }
+      }
+
+      try{
+        for (let i=0;i<picked.length;i++){
+          const dataUrl = await fileToDataURL(picked[i]);
+          photosData.push(dataUrl);
+        }
+        renderThumbs();
+      }catch(e){
+        showErr("Impossible de lire les images.");
+      } finally {
+        elPhotos.value = "";
+      }
+    });
+
+    function fileToDataURL(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("read error"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function validate(){
+      const title = (elTitle.value || "").trim();
+      const city = (elCity.value || "").trim();
+      const price = parseFloat(elPrice.value);
+      const lat = parseFloat(elLat.value);
+      const lng = parseFloat(elLng.value);
+
+      const errs = [];
+      if (!currentUser) errs.push("Tu dois être connecté.");
+      if (!title) errs.push("Titre obligatoire.");
+      if (!city) errs.push("Ville obligatoire.");
+      if (isNaN(price) || price < 0) errs.push("Prix invalide.");
+      if (isNaN(lat) || lat < -90 || lat > 90) errs.push("Latitude invalide.");
+      if (isNaN(lng) || lng < -180 || lng > 180) errs.push("Longitude invalide.");
+      if (kind === "rent" && !elPeriod.value) errs.push("Période de location obligatoire.");
+
+      // Option : au moins 1 photo
+      // if (!photosData.length) errs.push("Ajoute au moins 1 photo.");
+
+      return errs;
+    }
+
+    function resetForm(){
+      elTitle.value = "";
+      elType.value = "20ft";
+      elClass.value = "B";
+      elCity.value = "";
+      elPrice.value = "";
+      elDesc.value = "";
+      setKind("buy");
+      photosData = [];
+      renderThumbs();
+      hideErr();
+    }
+
+    btnReset.addEventListener("click", resetForm);
+
+    btnPublish.addEventListener("click", () => {
+      hideErr();
+      const errs = validate();
+      if (errs.length){
+        showErr("Corrige :\n- " + errs.join("\n- "));
+        return;
+      }
+
+      const title = (elTitle.value || "").trim();
+      const ctype = elType.value;
+      const cclass = (elClass.value || "B").toUpperCase();
+      const city = (elCity.value || "").trim();
+      const price = parseFloat(elPrice.value);
+      const period = (kind === "rent") ? (elPeriod.value || "day") : undefined;
+      const desc = (elDesc.value || "").trim();
+      const lat = parseFloat(elLat.value);
+      const lng = parseFloat(elLng.value);
+
+      // ✅ IMPORTANT POUR LES STATS PROFIL :
+      // ownerUid = UID du user connecté
+      const newListing = {
+        id: Date.now(),
+        ownerUid: currentUser.uid,
+        ownerEmail: currentUser.email || "",
+        ownerName: currentUser.displayName || "",
+        kind: kind,                 // buy | rent
+        period: period,             // day/week/month/year si rent
+        class: cclass,              // A/B/C
+        title: title,
+        ctype: ctype,
+        city: city,
+        price: price,
+        lat: lat,
+        lng: lng,
+        description: desc,
+        tags: [],
+        contact: currentUser.email || "contact@exemple.com",
+        photos: photosData.slice(0,5),
+        createdAt: Date.now()
+      };
+
+      const arr = loadUserListings();
+      arr.push(newListing);
+      saveUserListings(arr);
+
+      alert("Annonce publiée ✅");
+      window.location.href = "index.html";
+    });
+
+    // Navigation
+    btnBack.addEventListener("click", () => window.location.href = "index.html");
+    btnProfile.addEventListener("click", () => window.location.href = "profile.html");
+
+    btnLogout.addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){}
+      window.location.href = "index.html";
+    });
+
+    // Auth gate
+    onAuthStateChanged(auth, (user) => {
+      if (!user){
+        // Pas connecté -> retour index
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      const name = user.displayName || "Utilisateur";
+      const email = user.email || "";
+      userLine.textContent = "Connecté : " + name + (email ? (" — " + email) : "");
+    });
+
+    // Init
+    setKind("buy");
+    renderThumbs();
+  </script>
+</body>
+</html>
