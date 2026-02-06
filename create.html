@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Déposer — ContainerConnect</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="page">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0;">Déposer une annonce</h2>
+      <a class="btn-ghost" href="./index.html">Retour</a>
+    </div>
+
+    <div class="panel">
+      <div class="grid2">
+        <div>
+          <label for="kind">Type</label>
+          <select id="kind">
+            <option value="buy">Acheter</option>
+            <option value="rent">Louer</option>
+          </select>
+        </div>
+
+        <div id="periodWrap" style="display:none;">
+          <label for="period">Durée (location)</label>
+          <select id="period">
+            <option value="day">Jour</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="year">Année</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="ctype">Type de conteneur</label>
+          <select id="ctype">
+            <option value="20ft">20ft</option>
+            <option value="40ft">40ft</option>
+            <option value="reefer">Reefer</option>
+            <option value="open-top">Open-top</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="class">Classe</label>
+          <select id="class">
+            <option value="A">A</option>
+            <option value="B" selected>B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+
+        <div class="full" style="grid-column:1 / -1;">
+          <label for="title">Titre</label>
+          <input id="title" type="text" placeholder="ex: Conteneur 20ft étanche — dépôt sécurisé">
+        </div>
+
+        <div>
+          <label for="city">Ville</label>
+          <input id="city" type="text" placeholder="ex: Lyon">
+        </div>
+
+        <div>
+          <label for="price">Prix</label>
+          <input id="price" type="number" min="0" step="1" placeholder="ex: 300">
+        </div>
+
+        <div class="full" style="grid-column:1 / -1;">
+          <label for="desc">Description</label>
+          <input id="desc" type="text" placeholder="Détails, état, livraison, conditions…">
+        </div>
+
+        <div class="full" style="grid-column:1 / -1;">
+          <label for="tags">Tags (séparés par des virgules)</label>
+          <input id="tags" type="text" placeholder="ex: stockage, chantier, accès camion">
+        </div>
+
+        <div class="full" style="grid-column:1 / -1;">
+          <label for="photos">Photos (max 5)</label>
+          <input id="photos" type="file" accept="image/*" multiple>
+          <div id="preview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
+          <p style="margin:8px 0 0; color:var(--muted); font-size:12px;">
+            Astuce : pour éviter de remplir le stockage du navigateur, utilise plutôt des images dans le dossier <b>/photos</b> via URL (option avancée).
+          </p>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn" id="btnSave">Publier</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { watchAuth } from "./firebase.js";
+
+    function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
+    function loadUserListings(){
+      const arr = safeJsonParse(localStorage.getItem("cc_listings"));
+      return Array.isArray(arr) ? arr : [];
+    }
+    function saveUserListings(arr){
+      localStorage.setItem("cc_listings", JSON.stringify(arr));
+    }
+
+    async function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    const kind = document.getElementById("kind");
+    const periodWrap = document.getElementById("periodWrap");
+    const period = document.getElementById("period");
+
+    const ctype = document.getElementById("ctype");
+    const cls = document.getElementById("class");
+    const title = document.getElementById("title");
+    const city = document.getElementById("city");
+    const price = document.getElementById("price");
+    const desc = document.getElementById("desc");
+    const tags = document.getElementById("tags");
+    const photos = document.getElementById("photos");
+    const preview = document.getElementById("preview");
+
+    let currentUser = null;
+    let photoData = [];
+
+    function refreshKindUI(){
+      if (kind.value === "rent") periodWrap.style.display = "block";
+      else periodWrap.style.display = "none";
+    }
+    kind.addEventListener("change", refreshKindUI);
+    refreshKindUI();
+
+    photos.addEventListener("change", async () => {
+      preview.innerHTML = "";
+      photoData = [];
+
+      const files = Array.from(photos.files || []).slice(0,5);
+      for (let i=0;i<files.length;i++){
+        const dataUrl = await fileToDataUrl(files[i]);
+        photoData.push(dataUrl);
+
+        const img = document.createElement("img");
+        img.src = dataUrl;
+        img.style.width = "92px";
+        img.style.height = "70px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "12px";
+        img.style.border = "1px solid rgba(255,255,255,.10)";
+        preview.appendChild(img);
+      }
+    });
+
+    document.getElementById("btnSave").addEventListener("click", () => {
+      if (!currentUser){
+        location.href = "./auth.html?next=" + encodeURIComponent("./create.html");
+        return;
+      }
+
+      const t = (title.value || "").trim();
+      const c = (city.value || "").trim();
+      const p = parseFloat(price.value);
+
+      if (!t || !c || isNaN(p)){
+        alert("Remplis au minimum : titre, ville, prix.");
+        return;
+      }
+
+      const tagArr = (tags.value || "")
+        .split(",")
+        .map(x => x.trim())
+        .filter(Boolean)
+        .slice(0,8);
+
+      const list = loadUserListings();
+      const id = Date.now();
+
+      // lat/lng simplifiés (au centre France par défaut)
+      const item = {
+        id,
+        ownerUid: currentUser.uid,
+        ownerEmail: currentUser.email || "",
+        kind: kind.value,
+        period: (kind.value === "rent") ? period.value : null,
+        ctype: ctype.value,
+        class: cls.value,
+        title: t,
+        city: c,
+        price: p,
+        description: (desc.value || "").trim(),
+        tags: tagArr,
+        contact: currentUser.email || "contact@exemple.com",
+        lat: 46.6,
+        lng: 2.2,
+        photos: photoData.slice(0,5)
+      };
+
+      list.push(item);
+      saveUserListings(list);
+
+      alert("Annonce publiée ✅");
+      location.href = "./index.html";
+    });
+
+    watchAuth((u) => {
+      if (!u){
+        location.href = "./auth.html?next=" + encodeURIComponent("./create.html");
+        return;
+      }
+      currentUser = u;
+    });
+  </script>
+</body>
+</html>
